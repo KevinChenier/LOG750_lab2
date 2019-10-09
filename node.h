@@ -20,51 +20,27 @@
 
 *****************************************************************************/
 
-#ifndef SIMPLEVIEWER_H
-#define SIMPLEVIEWER_H
+#ifndef NODE_H
+#define NODE_H
 
-#include <QOpenGLFunctions_4_0_Core>
-#include <QOpenGLVertexArrayObject>
-#include <QOpenGLBuffer>
-#include <QMatrix4x4>
-#include <QVector3D>
 #include <QGLViewer/qglviewer.h>
+#include <glm/vec3.hpp>
 
-QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
-class Viewer : public QGLViewer, protected QOpenGLFunctions_4_0_Core
+class Node
 {
-public:
-    Viewer();
-    ~Viewer();
 
-public slots:
-    void cleanup();
-
-protected :
-  virtual void draw();
-  virtual void init();
 
 private:
-	void initRenderShaders();
-  void initGeometrySphere();
+    vec3 t ;
 
-	// VAOs and VBOs
-  enum VAO_IDs { VAO_Sphere, NumVAOs };
-  enum Buffer_IDs { VBO_Sphere, EBO_Sphere, NumBuffers };
-
-	GLuint m_VAOs[NumVAOs];
-	GLuint m_Buffers[NumBuffers];
-
-	// Render shaders & locations
-	QOpenGLShaderProgram *m_programRender;
-  int m_vPositionLocation;
-	int m_vNormalLocation;
-  int m_projMatrixLocation;
-  int m_mvMatrixLocation;
-	int	m_normalMatrixLocation;
-  int nbCube = 1;
+public:
+    explicit Node(Transform * localT)
+    bool addChild(Node child);
+    Node getChild(int index);
+    Transform getT(){return t;}
+    void setT(Transform localT){t=localT;}
 
 };
 
-#endif // SIMPLEVIEWER_H
+#endif // NODE_H

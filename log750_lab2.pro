@@ -23,6 +23,7 @@ SOURCES += QGLViewer/camera.cpp \
            QGLViewer/quaternion.cpp \
            QGLViewer/saveSnapshot.cpp \
            QGLViewer/vec.cpp \
+           cube.cpp \
            main.cpp \
            mainwindow.cpp \
            simpleViewer.cpp
@@ -40,7 +41,9 @@ HEADERS  += QGLViewer/camera.h \
             QGLViewer/quaternion.h \
             QGLViewer/vec.h \
             mainwindow.h \
-            simpleViewer.h
+            node.h \
+            simpleViewer.h \
+            transform.h
 
 DISTFILES += \
     basicShader.frag \

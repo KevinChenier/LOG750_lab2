@@ -1,23 +1,16 @@
 /****************************************************************************
-
  Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
-
  This file is part of the QGLViewer library version 2.3.6.
-
  http://www.libqglviewer.com - contact@libqglviewer.com
-
- This file may be used under the terms of the GNU General Public License 
+ This file may be used under the terms of the GNU General Public License
  versions 2.0 or 3.0 as published by the Free Software Foundation and
  appearing in the LICENSE file included in the packaging of this file.
- In addition, as a special exception, Gilles Debunne gives you certain 
+ In addition, as a special exception, Gilles Debunne gives you certain
  additional rights, described in the file GPL_EXCEPTION in this package.
-
  libQGLViewer uses dual licensing. Commercial/proprietary software must
  purchase a libQGLViewer Commercial License.
-
  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-
 *****************************************************************************/
 
 #include "simpleViewer.h"
@@ -34,10 +27,10 @@ using namespace std;
 
 namespace
 {
-  const int numRowSphere = 20;
-  const int numColSphere = numRowSphere+2;
-  const int numVerticesSphere = numColSphere * numRowSphere + 2;
-  const int numTriSphere = numColSphere*(numRowSphere-1)*2 + 2*numColSphere;
+  const float arrets = 0.02 ;
+  const int numTriCube = 2*6 ;
+  int nbVeticePerCube = 8 ;
+  int numTrianble =
 }
 
 Viewer::Viewer()
@@ -53,7 +46,7 @@ void Viewer::cleanup()
   makeCurrent();
 
   // Delete shaders
-	delete m_programRender;
+    delete m_programRender;
   m_programRender = nullptr;
 
   // Delete buffers
@@ -66,7 +59,7 @@ void Viewer::cleanup()
 void Viewer::draw()
 {
   // Bind our vertex/fragment shaders
-	m_programRender->bind();
+    m_programRender->bind();
 
   // Get projection and camera transformations
   QMatrix4x4 projectionMatrix;
@@ -87,58 +80,58 @@ void Viewer::draw()
 
 void Viewer::init()
 {
-	setMouseBinding(Qt::ShiftModifier, Qt::LeftButton, CAMERA, NO_MOUSE_ACTION);
+    setMouseBinding(Qt::ShiftModifier, Qt::LeftButton, CAMERA, NO_MOUSE_ACTION);
 
-	// Initialize openGL
+    // Initialize openGL
   connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &Viewer::cleanup);
   initializeOpenGLFunctions();
 
-	// Init shaders
-	initRenderShaders();
+    // Init shaders
+    initRenderShaders();
 
-	// Create our VertexArrays Objects and VertexBuffer Objects
-	glGenVertexArrays(NumVAOs, m_VAOs);
-	glGenBuffers(NumBuffers, m_Buffers);
+    // Create our VertexArrays Objects and VertexBuffer Objects
+    glGenVertexArrays(NumVAOs, m_VAOs);
+    glGenBuffers(NumBuffers, m_Buffers);
 
   initGeometrySphere();
 
-	// Init GL properties
-	glPointSize(10.0f);
+    // Init GL properties
+    glPointSize(10.0f);
 }
 
 void Viewer::initRenderShaders()
 {
-	// Load vertex and fragment shaders
-	m_programRender = new QOpenGLShaderProgram;
+    // Load vertex and fragment shaders
+    m_programRender = new QOpenGLShaderProgram;
   if (!m_programRender->addShaderFromSourceFile(QOpenGLShader::Vertex, "basicShader.vert")) {
-		cerr << "Unable to load Shader" << endl
-				 << "Log file:" << endl;
-		qDebug() << m_programRender->log();
-	}
+        cerr << "Unable to load Shader" << endl
+                 << "Log file:" << endl;
+        qDebug() << m_programRender->log();
+    }
   if (!m_programRender->addShaderFromSourceFile(QOpenGLShader::Fragment, "basicShader.frag")) {
-		cerr << "Unable to load Shader" << endl
-				 << "Log file:" << endl;
-		qDebug() << m_programRender->log();
-	}
-	m_programRender->link();
-	m_programRender->bind();	// Note: This is equivalent to glUseProgram(programId());
+        cerr << "Unable to load Shader" << endl
+                 << "Log file:" << endl;
+        qDebug() << m_programRender->log();
+    }
+    m_programRender->link();
+    m_programRender->bind();	// Note: This is equivalent to glUseProgram(programId());
 
-	// Specify shader input paramters
-	// The strings "vPosition", "mvMatrix", etc. have to match an attribute name in the vertex shader.
-	if ((m_vPositionLocation = m_programRender->attributeLocation("vPosition")) < 0)
-		qDebug() << "Unable to find shader location for " << "vPosition";
+    // Specify shader input paramters
+    // The strings "vPosition", "mvMatrix", etc. have to match an attribute name in the vertex shader.
+    if ((m_vPositionLocation = m_programRender->attributeLocation("vPosition")) < 0)
+        qDebug() << "Unable to find shader location for " << "vPosition";
 
-	if ((m_vNormalLocation = m_programRender->attributeLocation("vNormal")) < 0)
-		qDebug() << "Unable to find shader location for " << "vNormal";
+    if ((m_vNormalLocation = m_programRender->attributeLocation("vNormal")) < 0)
+        qDebug() << "Unable to find shader location for " << "vNormal";
 
-	if ((m_mvMatrixLocation = m_programRender->uniformLocation("mvMatrix")) < 0)
-		qDebug() << "Unable to find shader location for " << "mvMatrix";
+    if ((m_mvMatrixLocation = m_programRender->uniformLocation("mvMatrix")) < 0)
+        qDebug() << "Unable to find shader location for " << "mvMatrix";
 
-	if ((m_projMatrixLocation = m_programRender->uniformLocation("projMatrix")) < 0)
-		qDebug() << "Unable to find shader location for " << "projMatrix";
+    if ((m_projMatrixLocation = m_programRender->uniformLocation("projMatrix")) < 0)
+        qDebug() << "Unable to find shader location for " << "projMatrix";
 
-	if ((m_normalMatrixLocation = m_programRender->uniformLocation("normalMatrix")) < 0)
-		qDebug() << "Unable to find shader location for " << "normalMatrix";
+    if ((m_normalMatrixLocation = m_programRender->uniformLocation("normalMatrix")) < 0)
+        qDebug() << "Unable to find shader location for " << "normalMatrix";
 }
 
 void Viewer::initGeometrySphere()
@@ -158,15 +151,19 @@ void Viewer::initGeometrySphere()
   //       Also note that indices are stored in a different type of buffer called Element Array Buffer.
 
   // Create sphere vertices and faces
-  GLfloat vertices[numVerticesSphere][3];
-  GLfloat normals[numVerticesSphere][3];
-  GLint indices[numTriSphere*3][3];
 
+  GLfloat rootCubesVertices[nbCube][3];
+  GLfloat vertices[nbVeticePerCube*nbCube][3];
+  GLfloat normals[nbCube][3];
+  GLint indices[numTriCube*3][3];
+    /*
   // Generate surrounding vertices
   unsigned int v = 0;
   float thetaInc = 2.0f*3.14159265f / static_cast<float>(numColSphere);
   float phiInc = 3.14159265f / static_cast<float>(numRowSphere+1);
-  for (int row=0; row<numRowSphere; ++row)
+
+  /*
+   * for (int row=0; row<numRowSphere; ++row)
   {
     float phi = 3.14159265f - (static_cast<float>(row+1) * phiInc);
     for (int col=0; col<numColSphere; ++col, ++v)
@@ -198,8 +195,21 @@ void Viewer::initGeometrySphere()
   normals[numColSphere*numRowSphere+1][0] = 0.0f;
   normals[numColSphere*numRowSphere+1][1] = 1.0f;
   normals[numColSphere*numRowSphere+1][2] = 0.0f;
+   */
 
   // Generate surrounding indices (faces)
+  // first rootCubeVertices
+  rootCubesVertices[0][0] = 0.0;
+  rootCubesVertices[0][0] = 0.0;
+  rootCubesVertices[0][0] = 0.0;
+  for (int i=0; i<nbCube; ++i)
+  {
+    vertices[i][0] = rootCubesVertices[i][0] ;
+    vertices[i][1] = rootCubesVertices[i][1] ;
+    vertices[i][2] = rootCubesVertices[i][2] ;
+    vertices[i+1][0] = rootCubesVertices[i][0] ;
+
+  }
   unsigned int tri = 0;
   for (int row=0; row<numRowSphere-1; ++row)
   {
@@ -225,7 +235,7 @@ void Viewer::initGeometrySphere()
   }
 
   // Generate cap indices (faces)
-  for (int col=0; col<numColSphere; ++col, tri += 2)
+  for (int col=0; col<num; ++col, tri += 2)
   {
     indices[tri+0][0] = numColSphere*numRowSphere;
     indices[tri+0][1] = (col<numColSphere-1) ? col+1 : 0;
@@ -236,7 +246,7 @@ void Viewer::initGeometrySphere()
     indices[tri+1][1] = rowStart + col;
     indices[tri+1][2] = (col<numColSphere-1) ? (rowStart + col + 1) : rowStart;
   }
-
+   */
   // Fill vertex VBO
   GLsizeiptr offsetVertices = 0;
   GLsizeiptr offsetNormals = sizeof(vertices);
