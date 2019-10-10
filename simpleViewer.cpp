@@ -22,15 +22,24 @@
 using namespace std;
 
 #include <time.h>
+#include <cube.h>
+#include <QQueue>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 namespace
 {
-  const float arrets = 0.02 ;
-  const int numTriCube = 2*6 ;
-  int nbVeticePerCube = 8 ;
-  int numTrianble =
+ // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
+  const int numVerticePerCube = 20 ;
+        int numCube = 1;
+  const int nbFace = 6 ;
+  const int nbGrille = 2;
+  const int numVerticesCubes =numCube*numVerticesCubes;
+  const int numTriPerCube = nbFace*2 ;
+  const int numTriCubes = numTriPerCube*numCube;
+
+
+
 }
 
 Viewer::Viewer()
@@ -74,8 +83,9 @@ void Viewer::draw()
   // Draw the sphere
   // Note: Because we are using an index buffer, we need to call glDrawElements instead
   // of glDrawArrays.
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glBindVertexArray(m_VAOs[VAO_Sphere]);
-  glDrawElements(GL_TRIANGLES, numTriSphere*3, GL_UNSIGNED_INT, nullptr);
+  glDrawElements(GL_TRIANGLES, numTriCubes*3, GL_UNSIGNED_INT, nullptr);
 }
 
 void Viewer::init()
@@ -151,102 +161,29 @@ void Viewer::initGeometrySphere()
   //       Also note that indices are stored in a different type of buffer called Element Array Buffer.
 
   // Create sphere vertices and faces
+  GLfloat vertices[numVerticesCubes][3];
+  GLfloat normals[numVerticesCubes][3];
+  // need to implement  GLint indices[numTriCubes*3][3];
 
-  GLfloat rootCubesVertices[nbCube][3];
-  GLfloat vertices[nbVeticePerCube*nbCube][3];
-  GLfloat normals[nbCube][3];
-  GLint indices[numTriCube*3][3];
-    /*
   // Generate surrounding vertices
-  unsigned int v = 0;
-  float thetaInc = 2.0f*3.14159265f / static_cast<float>(numColSphere);
-  float phiInc = 3.14159265f / static_cast<float>(numRowSphere+1);
+  unsigned int numVertices = 0;
 
-  /*
-   * for (int row=0; row<numRowSphere; ++row)
-  {
-    float phi = 3.14159265f - (static_cast<float>(row+1) * phiInc);
-    for (int col=0; col<numColSphere; ++col, ++v)
-    {
-      float theta = col*thetaInc;
-      vertices[v][0] = 0.5f*sin(theta)*sin(phi);
-      vertices[v][1] = 0.5f*cos(phi);
-      vertices[v][2] = 0.5f*cos(theta)*sin(phi);
+  QQueue<Cube> queueCube;
+  queueCube.append(Cube());
 
-      normals[v][0] = vertices[v][0]*2.0f;	// Multiply by 2 because sphere radius is 0.5
-      normals[v][1] = vertices[v][1]*2.0f;
-      normals[v][2] = vertices[v][2]*2.0f;
+  for (int i=0; i<numCube; ++i)
+  { 
+    if (numVertices<numVerticesCubes){
+        QQueue<float [3]> cubeVertices = queueCube[i].getVertices() ;
+        while (!cubeVertices.isEmpty()){
+            GLfloat currentVertice[3];
+          // need debug currentVertice = cubeVertices.pop_front();
+            numVertices++;
+        }
     }
   }
 
-  // Generate cap vertices
-  vertices[numColSphere*numRowSphere+0][0] = 0.0f;
-  vertices[numColSphere*numRowSphere+0][1] = -0.5f;
-  vertices[numColSphere*numRowSphere+0][2] = 0.0f;
 
-  vertices[numColSphere*numRowSphere+1][0] = 0.0f;
-  vertices[numColSphere*numRowSphere+1][1] = 0.5f;
-  vertices[numColSphere*numRowSphere+1][2] = 0.0f;
-
-  normals[numColSphere*numRowSphere+0][0] = 0.0f;
-  normals[numColSphere*numRowSphere+0][1] = -1.0f;
-  normals[numColSphere*numRowSphere+0][2] = 0.0f;
-
-  normals[numColSphere*numRowSphere+1][0] = 0.0f;
-  normals[numColSphere*numRowSphere+1][1] = 1.0f;
-  normals[numColSphere*numRowSphere+1][2] = 0.0f;
-   */
-
-  // Generate surrounding indices (faces)
-  // first rootCubeVertices
-  rootCubesVertices[0][0] = 0.0;
-  rootCubesVertices[0][0] = 0.0;
-  rootCubesVertices[0][0] = 0.0;
-  for (int i=0; i<nbCube; ++i)
-  {
-    vertices[i][0] = rootCubesVertices[i][0] ;
-    vertices[i][1] = rootCubesVertices[i][1] ;
-    vertices[i][2] = rootCubesVertices[i][2] ;
-    vertices[i+1][0] = rootCubesVertices[i][0] ;
-
-  }
-  unsigned int tri = 0;
-  for (int row=0; row<numRowSphere-1; ++row)
-  {
-    int rowStart = row*numColSphere;
-    int topRowStart = rowStart + numColSphere;
-
-    for (int col=0; col<numColSphere; ++col, tri += 2)
-    {
-      // Compute quad vertices
-      int v = rowStart + col;
-      int vi = (col<numColSphere-1) ? v+1 : rowStart;
-      int vj = topRowStart + col;
-      int vji = (col<numColSphere-1) ? vj+1 : topRowStart;
-
-      // Add to indices
-      indices[tri+0][0] = v;
-      indices[tri+0][1] = vi;
-      indices[tri+0][2] = vj;
-      indices[tri+1][0] = vi;
-      indices[tri+1][1] = vji;
-      indices[tri+1][2] = vj;
-    }
-  }
-
-  // Generate cap indices (faces)
-  for (int col=0; col<num; ++col, tri += 2)
-  {
-    indices[tri+0][0] = numColSphere*numRowSphere;
-    indices[tri+0][1] = (col<numColSphere-1) ? col+1 : 0;
-    indices[tri+0][2] = col;
-
-    int rowStart = (numRowSphere-1)*numColSphere;
-    indices[tri+1][0] = numColSphere*numRowSphere+1;
-    indices[tri+1][1] = rowStart + col;
-    indices[tri+1][2] = (col<numColSphere-1) ? (rowStart + col + 1) : rowStart;
-  }
-   */
   // Fill vertex VBO
   GLsizeiptr offsetVertices = 0;
   GLsizeiptr offsetNormals = sizeof(vertices);
@@ -269,5 +206,6 @@ void Viewer::initGeometrySphere()
   // Note: The current VAO will remember the call to glBindBuffer for a GL_ELEMENT_ARRAY_BUFFER.
   //			 However, we will need to call glDrawElements() instead of glDrawArrays().
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Sphere]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+  // need add indices
+  //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }

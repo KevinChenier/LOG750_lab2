@@ -63,7 +63,7 @@ private:
   int m_projMatrixLocation;
   int m_mvMatrixLocation;
 	int	m_normalMatrixLocation;
-  int nbCube = 1;
+
 
 };
 

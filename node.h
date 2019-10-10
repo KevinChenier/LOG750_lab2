@@ -23,8 +23,9 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <QGLViewer/qglviewer.h>
-#include <glm/vec3.hpp>
+#include <QMatrix4x4>
+#include <QStack>
+
 
 
 class Node
@@ -32,14 +33,16 @@ class Node
 
 
 private:
-    vec3 t ;
+    QMatrix4x4 t;
+    QStack<Node> stack;
 
 public:
-    explicit Node(Transform * localT)
-    bool addChild(Node child);
-    Node getChild(int index);
-    Transform getT(){return t;}
-    void setT(Transform localT){t=localT;}
+    explicit Node(){t.setToIdentity();}
+    void addChild(Node child){stack.push(child);}
+    // Need update or test
+    Node * getChild(int index){stack.at(index);}
+    QMatrix4x4 getT(){return t;}
+    void setT(QMatrix4x4 lT){t=lT;}
 
 };
 
