@@ -1,9 +1,6 @@
-#include <node.h>
-#include <transform.h>
-class Cube
-{
-private:
+#include "cube.h"
 
-public:
-    Cube() {}
-};
+Cube::Cube()
+{
+
+}
