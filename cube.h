@@ -4,7 +4,7 @@
 #include <node.h>
 #include <QVector3D>
 #include <QQueue>
-
+#include <QGLViewer/qglviewer.h>
 class Cube : public Node
 {
 private:
@@ -15,7 +15,7 @@ public:
 
     QVector3D getRootVertice(){return rootVertice;}
 
-    QQueue<float[3]> getVertices();
+    QQueue<QVector3D> getVertices();
 
     void setRootVertice(QVector3D lrootVertice){ rootVertice = lrootVertice;}
 

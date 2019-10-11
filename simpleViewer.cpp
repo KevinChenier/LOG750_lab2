@@ -23,7 +23,9 @@ using namespace std;
 
 #include <time.h>
 #include <cube.h>
+#include <QVector3D>
 #include <QQueue>
+
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -34,9 +36,9 @@ namespace
         int numCube = 1;
   const int nbFace = 6 ;
   const int nbGrille = 2;
-  const int numVerticesCubes =numCube*numVerticesCubes;
+   int numVerticesCubes =numCube*numVerticesCubes;
   const int numTriPerCube = nbFace*2 ;
-  const int numTriCubes = numTriPerCube*numCube;
+   int numTriCubes = numTriPerCube*numCube;
 
 
 
@@ -85,7 +87,7 @@ void Viewer::draw()
   // of glDrawArrays.
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glBindVertexArray(m_VAOs[VAO_Sphere]);
-  glDrawElements(GL_TRIANGLES, numTriCubes*3, GL_UNSIGNED_INT, nullptr);
+  glDrawElements(GL_TRIANGLES, numVerticesCubes, GL_UNSIGNED_INT, nullptr);
 }
 
 void Viewer::init()
@@ -166,23 +168,42 @@ void Viewer::initGeometrySphere()
   // need to implement  GLint indices[numTriCubes*3][3];
 
   // Generate surrounding vertices
-  unsigned int numVertices = 0;
-
+  int numVertices = 0;
   QQueue<Cube> queueCube;
   queueCube.append(Cube());
 
   for (int i=0; i<numCube; ++i)
   { 
     if (numVertices<numVerticesCubes){
-        QQueue<float [3]> cubeVertices = queueCube[i].getVertices() ;
+        QQueue<QVector3D> cubeVertices = queueCube[i].getVertices() ;
         while (!cubeVertices.isEmpty()){
-            GLfloat currentVertice[3];
-          // need debug currentVertice = cubeVertices.pop_front();
+            QVector3D currentVertice = cubeVertices.dequeue();
+            vertices[numVertices][0] =currentVertice.x();
+            vertices[numVertices][1] =currentVertice.y();
+            vertices[numVertices][2] =currentVertice.z();
+
+            currentVertice.normalize();
+            normals[numVertices][0] =currentVertice.x();
+            normals[numVertices][1] =currentVertice.y();
+            normals[numVertices][2] =currentVertice.z();
+
             numVertices++;
         }
     }
-  }
 
+  }
+  qInfo() << "vertice ";
+  qInfo() << QString::number(vertices[0][0]);
+  qInfo() << QString::number(vertices[0][1]);
+  qInfo() << QString::number(vertices[0][2]);
+
+  qInfo() << QString::number(vertices[1][0]);
+  qInfo() << QString::number(vertices[1][1]);
+  qInfo() << QString::number(vertices[1][2]);
+
+  qInfo() << QString::number(vertices[2][0]);
+  qInfo() << QString::number(vertices[2][1]);
+  qInfo() << QString::number(vertices[2][2]);
 
   // Fill vertex VBO
   GLsizeiptr offsetVertices = 0;

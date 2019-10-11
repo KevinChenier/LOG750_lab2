@@ -24,7 +24,7 @@
 #define NODE_H
 
 #include <QMatrix4x4>
-#include <QStack>
+#include <QQueue>
 
 
 
@@ -34,13 +34,13 @@ class Node
 
 private:
     QMatrix4x4 t;
-    QStack<Node> stack;
+    QQueue<Node> queue;
 
 public:
     explicit Node(){t.setToIdentity();}
-    void addChild(Node child){stack.push(child);}
+    void addChild(Node child){queue.append(child);}
     // Need update or test
-    Node * getChild(int index){stack.at(index);}
+    Node getChild(int index){Node n = queue[index]; return n;}
     QMatrix4x4 getT(){return t;}
     void setT(QMatrix4x4 lT){t=lT;}
 
