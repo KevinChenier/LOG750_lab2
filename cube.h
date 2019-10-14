@@ -8,7 +8,7 @@
 class Cube : public Node
 {
 private:
-    QVector3D rootVertice = {0,0,0};
+    QVector3D rootVertice = QVector3D(0.0f,0.0f,0.0f);
     float dimArret = 0.5f;
 public:
     explicit Cube (){}

@@ -32,11 +32,11 @@ using namespace std;
 namespace
 {
  // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
-  const int numVerticePerCube = 20 ;
+  const int numVerticePerCube = 24 ;
         int numCube = 1;
   const int nbFace = 6 ;
   const int nbGrille = 2;
-   int numVerticesCubes =numCube*numVerticesCubes;
+   int numVerticesCubes =numCube*numVerticePerCube;
   const int numTriPerCube = nbFace*2 ;
    int numTriCubes = numTriPerCube*numCube;
 
@@ -173,7 +173,7 @@ void Viewer::initGeometrySphere()
   queueCube.append(Cube());
 
   for (int i=0; i<numCube; ++i)
-  { 
+  {
     if (numVertices<numVerticesCubes){
         QQueue<QVector3D> cubeVertices = queueCube[i].getVertices() ;
         while (!cubeVertices.isEmpty()){
@@ -182,28 +182,28 @@ void Viewer::initGeometrySphere()
             vertices[numVertices][1] =currentVertice.y();
             vertices[numVertices][2] =currentVertice.z();
 
-            currentVertice.normalize();
-            normals[numVertices][0] =currentVertice.x();
-            normals[numVertices][1] =currentVertice.y();
-            normals[numVertices][2] =currentVertice.z();
+            QVector3D currentVerticeN = currentVertice.normalized();
+            normals[numVertices][0] =currentVerticeN.x();
+            normals[numVertices][1] =currentVerticeN.y();
+            normals[numVertices][2] =currentVerticeN.z();
+
+
+
+            // to deleted
+            //start
+            qInfo() << "vertice " << numVertices ;
+            qInfo() << QString::number(vertices[numVertices][0]);
+            qInfo() << QString::number(vertices[numVertices][1]);
+            qInfo() << QString::number(vertices[numVertices][2]);
+            //end
 
             numVertices++;
         }
     }
 
   }
-  qInfo() << "vertice ";
-  qInfo() << QString::number(vertices[0][0]);
-  qInfo() << QString::number(vertices[0][1]);
-  qInfo() << QString::number(vertices[0][2]);
 
-  qInfo() << QString::number(vertices[1][0]);
-  qInfo() << QString::number(vertices[1][1]);
-  qInfo() << QString::number(vertices[1][2]);
 
-  qInfo() << QString::number(vertices[2][0]);
-  qInfo() << QString::number(vertices[2][1]);
-  qInfo() << QString::number(vertices[2][2]);
 
   // Fill vertex VBO
   GLsizeiptr offsetVertices = 0;
