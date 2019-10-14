@@ -34,11 +34,11 @@ namespace
  // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
   const int numVerticePerCube = 24 ;
         int numCube = 1;
+  const int numIndice = 34 ;
   const int nbFace = 6 ;
   const int nbGrille = 2;
    int numVerticesCubes =numCube*numVerticePerCube;
-  const int numTriPerCube = nbFace*2 ;
-   int numTriCubes = numTriPerCube*numCube;
+   int numIndiceCubes = numIndice*numCube;
 
 
 
@@ -85,9 +85,9 @@ void Viewer::draw()
   // Draw the sphere
   // Note: Because we are using an index buffer, we need to call glDrawElements instead
   // of glDrawArrays.
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glBindVertexArray(m_VAOs[VAO_Sphere]);
-  glDrawElements(GL_TRIANGLES, numVerticesCubes, GL_UNSIGNED_INT, nullptr);
+  glDrawElements(GL_TRIANGLE_STRIP, numIndice * numCube, GL_UNSIGNED_INT, nullptr);
 }
 
 void Viewer::init()
@@ -165,7 +165,8 @@ void Viewer::initGeometrySphere()
   // Create sphere vertices and faces
   GLfloat vertices[numVerticesCubes][3];
   GLfloat normals[numVerticesCubes][3];
-  // need to implement  GLint indices[numTriCubes*3][3];
+  // need to implement
+  GLint indices[numIndiceCubes];
 
   // Generate surrounding vertices
   int numVertices = 0;
@@ -203,6 +204,14 @@ void Viewer::initGeometrySphere()
 
   }
 
+  for (int i=0; i<numIndiceCubes; ++i)
+  {
+    indices[i] = Cube().indices[i/numCube];
+    qInfo() << "indec " << i ;
+    qInfo() << QString::number(indices[i]);
+  }
+
+
 
 
   // Fill vertex VBO
@@ -228,5 +237,6 @@ void Viewer::initGeometrySphere()
   //			 However, we will need to call glDrawElements() instead of glDrawArrays().
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Sphere]);
   // need add indices
-  //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+   glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
 }
