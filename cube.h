@@ -10,19 +10,28 @@ class Cube : public Node
 private:
     QVector3D rootVertice = QVector3D(-1.0f,-1.0f,1.0f);
     float dimArret = 0.5f;
+    QQueue<Cube> queueCube;
 
 public:
     explicit Cube (){}
-
+    explicit Cube (float ldimArret){ dimArret = ldimArret ;}
     QVector3D getRootVertice(){return rootVertice;}
 
     QQueue<QVector3D> getVertices();
+
+    QQueue<Cube> getQueueCube(){return queueCube;}
+
+    void addChild(Cube child){queueCube.append(child);}
+
+    Cube getChild(int index){Cube n = queueCube[index]; return n;}
+
     void setRootVertice(QVector3D lrootVertice){ rootVertice = lrootVertice;}
 
     void setDimArret(float lDimArret){ dimArret = lDimArret;}
 
     float getDimArret(){return dimArret;}
 
+    // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     GLint indices [34] = {
         0,  1,  2,  3,  3,     // Face 0 - triangle strip ( v0,  v1,  v2,  v3)
          4,  4,  5,  6,  7,  7, // Face 1 - triangle strip ( v4,  v5,  v6,  v7)

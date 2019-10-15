@@ -25,6 +25,7 @@
 
 #include <QMatrix4x4>
 #include <QQueue>
+#include <QStack>
 
 
 
@@ -33,16 +34,19 @@ class Node
 
 
 private:
-    QMatrix4x4 t;
-    QQueue<Node> queue;
+    QStack<QMatrix4x4> stackTransformation;
+
 
 public:
-    explicit Node(){t.setToIdentity();}
-    void addChild(Node child){queue.append(child);}
-    // Need update or test
-    Node getChild(int index){Node n = queue[index]; return n;}
-    QMatrix4x4 getT(){return t;}
-    void setT(QMatrix4x4 lT){t=lT;}
+    explicit Node(){
+        QMatrix4x4 tmpTransformation ;
+        tmpTransformation.setToIdentity();
+        stackTransformation.append(tmpTransformation);
+    }
+
+    QMatrix4x4 getTransformation();
+    void addT(QMatrix4x4 tmpTransformation){stackTransformation.append(tmpTransformation);}
+    QStack<QMatrix4x4> getStackTransformation(){return stackTransformation ;}
 
 };
 

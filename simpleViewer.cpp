@@ -27,6 +27,7 @@ using namespace std;
 #include <QQueue>
 
 
+
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 namespace
@@ -34,13 +35,12 @@ namespace
  // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
   const int numVerticePerCube = 24 ;
         int numCube = 1;
-  const int numIndice = 34 ;
-  const int nbFace = 6 ;
-  const int nbGrille = 2;
-   int numVerticesCubes =numCube*numVerticePerCube;
-   int numIndiceCubes = numIndice*numCube;
-
-
+  const int numIndicePerCube = 34 ;
+   int numVertices =numCube*numVerticePerCube;
+   int numIndices = numIndicePerCube*numCube;
+    // set root cube with dimArret = 0
+   // rootCube is not the first cube.
+   Cube rootCube = Cube(0.0f) ;
 
 }
 
@@ -78,6 +78,7 @@ void Viewer::draw()
   camera()->getProjectionMatrix(projectionMatrix);
   camera()->getModelViewMatrix(modelViewMatrix);
 
+
   m_programRender->setUniformValue(m_projMatrixLocation, projectionMatrix);
   m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
   m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
@@ -87,7 +88,7 @@ void Viewer::draw()
   // of glDrawArrays.
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glBindVertexArray(m_VAOs[VAO_Sphere]);
-  glDrawElements(GL_TRIANGLE_STRIP, numIndice * numCube, GL_UNSIGNED_INT, nullptr);
+  glDrawElements(GL_TRIANGLE_STRIP, numIndices, GL_UNSIGNED_INT, nullptr);
 }
 
 void Viewer::init()
@@ -104,11 +105,14 @@ void Viewer::init()
     // Create our VertexArrays Objects and VertexBuffer Objects
     glGenVertexArrays(NumVAOs, m_VAOs);
     glGenBuffers(NumBuffers, m_Buffers);
+    setSceneRadius(5.0);          // scene has a 100 OpenGL units radius
+    camera()->showEntireScene();
 
-  initGeometrySphere();
+    initGeometrySphere();
 
     // Init GL properties
     glPointSize(10.0f);
+
 }
 
 void Viewer::initRenderShaders()
@@ -162,53 +166,73 @@ void Viewer::initGeometrySphere()
   //
   //       Also note that indices are stored in a different type of buffer called Element Array Buffer.
 
+
+
+
+
   // Create sphere vertices and faces
-  GLfloat vertices[numVerticesCubes][3];
-  GLfloat normals[numVerticesCubes][3];
+  GLfloat vertices[numVertices][3];
+  GLfloat normals[numVertices][3];
   // need to implement
-  GLint indices[numIndiceCubes];
+  GLint indices[numIndices];
 
   // Generate surrounding vertices
-  int numVertices = 0;
-  QQueue<Cube> queueCube;
-  queueCube.append(Cube());
+  int v = 0;
+
+  //IMPORTANT: rootCube is not the first cube.
+  //IMPORTANT: TODO getAllVertices(numVertices) on rootCube shoulbe return
+  // numVertices inculde vertices of child child (see pattern vistor)
+  // don't forget update numCube after add an cube when the application is up
+
+   rootCube.addChild(Cube());
+   QQueue<Cube> childrenRootCube = rootCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
+
+   /*
+    // TODO: write recursive method with pattern vistor to get getAllVertices(numVertices)
+
+        while (!vertices.isEmpty()){
+            QVector3D currentVertice = vertices.dequeue();
+            vertices[v][0] =currentVertice.x();
+            vertices[v][1] =currentVertice.y();
+            vertices[v][2] =currentVertice.z();
+
+            QVector3D currentVerticeN = currentVertice.normalized();
+            normals[v][0] =currentVerticeN.x();
+            normals[v][1] =currentVerticeN.y();
+            normals[v][2] =currentVerticeN.z();
+
+            v++;
+    */
 
   for (int i=0; i<numCube; ++i)
   {
-    if (numVertices<numVerticesCubes){
-        QQueue<QVector3D> cubeVertices = queueCube[i].getVertices() ;
+    if (v<numVertices){
+
+
+        QQueue<QVector3D> cubeVertices = childrenRootCube[i].getVertices() ;
+
         while (!cubeVertices.isEmpty()){
             QVector3D currentVertice = cubeVertices.dequeue();
-            vertices[numVertices][0] =currentVertice.x();
-            vertices[numVertices][1] =currentVertice.y();
-            vertices[numVertices][2] =currentVertice.z();
+            vertices[v][0] =currentVertice.x();
+            vertices[v][1] =currentVertice.y();
+            vertices[v][2] =currentVertice.z();
 
             QVector3D currentVerticeN = currentVertice.normalized();
-            normals[numVertices][0] =currentVerticeN.x();
-            normals[numVertices][1] =currentVerticeN.y();
-            normals[numVertices][2] =currentVerticeN.z();
+            normals[v][0] =currentVerticeN.x();
+            normals[v][1] =currentVerticeN.y();
+            normals[v][2] =currentVerticeN.z();
 
-
-
-            // to deleted
-            //start
-            qInfo() << "vertice " << numVertices ;
-            qInfo() << QString::number(vertices[numVertices][0]);
-            qInfo() << QString::number(vertices[numVertices][1]);
-            qInfo() << QString::number(vertices[numVertices][2]);
-            //end
-
-            numVertices++;
+            v++;
         }
     }
 
   }
 
-  for (int i=0; i<numIndiceCubes; ++i)
+  for (int i=0; i<numIndices; ++i)
   {
     indices[i] = Cube().indices[i/numCube];
-    qInfo() << "indec " << i ;
-    qInfo() << QString::number(indices[i]);
+   // qInfo() << "indec " << i ;
+    //qInfo() << QString::number(indices[i]);
   }
 
 
