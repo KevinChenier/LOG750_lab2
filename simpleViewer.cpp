@@ -34,7 +34,7 @@ namespace
 {
  // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
   const int numVerticePerCube = 24 ;
-        int numCube = 1;
+        int numCube = 2;
   const int numIndicePerCube = 34 ;
    int numVertices =numCube*numVerticePerCube;
    int numIndices = numIndicePerCube*numCube;
@@ -184,7 +184,14 @@ void Viewer::initGeometrySphere()
   // numVertices inculde vertices of child child (see pattern vistor)
   // don't forget update numCube after add an cube when the application is up
 
-   rootCube.addChild(Cube());
+   Cube cube1 = Cube();
+   Cube cube2 = Cube();
+   QMatrix4x4 t ;
+   t.translate(QVector3D(0.0f,0.0f,0.5f));
+   cube2.addT(t);
+
+   rootCube.addChild(cube1);
+   rootCube.addChild(cube2);
    QQueue<Cube> childrenRootCube = rootCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
 
    /*
@@ -213,6 +220,7 @@ void Viewer::initGeometrySphere()
 
         while (!cubeVertices.isEmpty()){
             QVector3D currentVertice = cubeVertices.dequeue();
+
             vertices[v][0] =currentVertice.x();
             vertices[v][1] =currentVertice.y();
             vertices[v][2] =currentVertice.z();
@@ -222,6 +230,11 @@ void Viewer::initGeometrySphere()
             normals[v][1] =currentVerticeN.y();
             normals[v][2] =currentVerticeN.z();
 
+            qInfo() << "vertices" << v;
+            qInfo() << QString::number(vertices[v][0]);
+            qInfo() << QString::number(vertices[v][1]);
+            qInfo() << QString::number(vertices[v][2]);
+
             v++;
         }
     }
@@ -230,9 +243,9 @@ void Viewer::initGeometrySphere()
 
   for (int i=0; i<numIndices; ++i)
   {
-    indices[i] = Cube().indices[i/numCube];
-   // qInfo() << "indec " << i ;
-    //qInfo() << QString::number(indices[i]);
+    indices[i] = Cube().indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
+    qInfo() << "indec " << i ;
+    qInfo() << QString::number(indices[i]);
   }
 
 
