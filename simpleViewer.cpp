@@ -34,7 +34,9 @@ namespace
 {
  // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
   const int numVerticePerCube = 24 ;
-        int numCube = 2;
+  const int numCubeRow = 10 ;
+   const int numCubeCol = 15 ;
+        int numCube = numCubeRow*numCubeCol;
   const int numIndicePerCube = 34 ;
    int numVertices =numCube*numVerticePerCube;
    int numIndices = numIndicePerCube*numCube;
@@ -105,9 +107,9 @@ void Viewer::init()
     // Create our VertexArrays Objects and VertexBuffer Objects
     glGenVertexArrays(NumVAOs, m_VAOs);
     glGenBuffers(NumBuffers, m_Buffers);
-    setSceneRadius(5.0);          // scene has a 100 OpenGL units radius
+    setSceneRadius(10);          // scene has a 100 OpenGL units radius
     camera()->showEntireScene();
-
+    initScene();
     initGeometrySphere();
 
     // Init GL properties
@@ -184,14 +186,7 @@ void Viewer::initGeometrySphere()
   // numVertices inculde vertices of child child (see pattern vistor)
   // don't forget update numCube after add an cube when the application is up
 
-   Cube cube1 = Cube();
-   Cube cube2 = Cube();
-   QMatrix4x4 t ;
-   t.translate(QVector3D(0.0f,0.0f,0.5f));
-   cube2.addT(t);
 
-   rootCube.addChild(cube1);
-   rootCube.addChild(cube2);
    QQueue<Cube> childrenRootCube = rootCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
 
    /*
@@ -210,11 +205,11 @@ void Viewer::initGeometrySphere()
 
             v++;
     */
-
+  // with good comception this line will be deleted
+  int numCubeInRootCube = rootCube.getQueueCube().length();
   for (int i=0; i<numCube; ++i)
   {
-    if (v<numVertices){
-
+    if (v<numVertices && i< numCubeInRootCube){
 
         QQueue<QVector3D> cubeVertices = childrenRootCube[i].getVertices() ;
 
@@ -229,12 +224,12 @@ void Viewer::initGeometrySphere()
             normals[v][0] =currentVerticeN.x();
             normals[v][1] =currentVerticeN.y();
             normals[v][2] =currentVerticeN.z();
-
+    /*
             qInfo() << "vertices" << v;
             qInfo() << QString::number(vertices[v][0]);
             qInfo() << QString::number(vertices[v][1]);
             qInfo() << QString::number(vertices[v][2]);
-
+*/
             v++;
         }
     }
@@ -243,9 +238,11 @@ void Viewer::initGeometrySphere()
 
   for (int i=0; i<numIndices; ++i)
   {
+       // with good comception this line will be deleted
     indices[i] = Cube().indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
-    qInfo() << "indec " << i ;
-    qInfo() << QString::number(indices[i]);
+
+    /*qInfo() << "indec " << i ;
+    qInfo() << QString::number(indices[i]);*/
   }
 
 
@@ -277,3 +274,22 @@ void Viewer::initGeometrySphere()
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
    glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
 }
+void Viewer::initScene()
+{
+    Cube tmp = Cube();
+    float dimArret = tmp.getDimArret();
+
+
+    for (int i=0; i<numCubeRow; ++i)
+    {
+        for (int j=0; j<numCubeCol; ++j)
+        {
+             Cube localCube = Cube();
+             QMatrix4x4 firstTranformation ;
+             firstTranformation.translate(QVector3D(i*dimArret,-10*dimArret,j*dimArret));
+             localCube.addT(firstTranformation);
+             rootCube.addChild(localCube);
+        }
+    }
+}
+

@@ -48,6 +48,7 @@ protected :
 private:
 	void initRenderShaders();
   void initGeometrySphere();
+  void initScene();
 
 	// VAOs and VBOs
   enum VAO_IDs { VAO_Sphere, NumVAOs };
