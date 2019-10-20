@@ -46,26 +46,24 @@ protected :
   virtual void init();
 
 private:
-	void initRenderShaders();
+  void initRenderShaders();
   void initGeometrySphere();
   void initScene();
 
-	// VAOs and VBOs
+  // VAOs and VBOs
   enum VAO_IDs { VAO_Sphere, NumVAOs };
   enum Buffer_IDs { VBO_Sphere, EBO_Sphere, NumBuffers };
 
-	GLuint m_VAOs[NumVAOs];
-	GLuint m_Buffers[NumBuffers];
+  GLuint m_VAOs[NumVAOs];
+  GLuint m_Buffers[NumBuffers];
 
-	// Render shaders & locations
-	QOpenGLShaderProgram *m_programRender;
+  // Render shaders & locations
+  QOpenGLShaderProgram *m_programRender;
   int m_vPositionLocation;
-	int m_vNormalLocation;
+  int m_vNormalLocation;
   int m_projMatrixLocation;
   int m_mvMatrixLocation;
-	int	m_normalMatrixLocation;
-
-
+  int m_normalMatrixLocation;
 };
 
 #endif // SIMPLEVIEWER_H
