@@ -9,12 +9,12 @@ Node::Node()
 
 QMatrix4x4 Node::getTransformation()
 {
-    QMatrix4x4 t;
-    t.setToIdentity();
+    QMatrix4x4 transformation;
+    transformation.setToIdentity();
 
     while (!stackTransformation.isEmpty()) {
-        t*=stackTransformation.pop();
+        transformation*=stackTransformation.pop();
     }
-    return t;
+    return transformation;
 }
 

@@ -15,7 +15,7 @@ public:
     QMatrix4x4 getTransformation();
     QStack<QMatrix4x4> getStackTransformation() { return stackTransformation; }
 
-    void addT(QMatrix4x4 tmpTransformation) { stackTransformation.append(tmpTransformation); }
+    void addTransformation(QMatrix4x4 tmpTransformation) { stackTransformation.append(tmpTransformation); }
 
 private:
     QStack<QMatrix4x4> stackTransformation;

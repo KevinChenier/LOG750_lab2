@@ -5,11 +5,6 @@ Cube::Cube ()
 {
 }
 
-Cube::Cube (float ldimArret)
-{
-    setDimArret(ldimArret);
-}
-
 QQueue<QVector3D> Cube::getVertices()
 {
    // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
