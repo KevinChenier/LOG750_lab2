@@ -42,30 +42,47 @@ public slots:
     void cleanup();
 
 protected :
-  virtual void draw();
-  virtual void init();
+    virtual void draw();
+    virtual void init();
+
+    virtual void mousePressEvent(QMouseEvent* e);
 
 private:
-	void initRenderShaders();
-  void initGeometrySphere();
-  void initScene();
+    void initRenderShaders();
+    void initPickingShaders();
+    void initGeometryCube();
+    void initScene();
 
-	// VAOs and VBOs
-  enum VAO_IDs { VAO_Sphere, NumVAOs };
-  enum Buffer_IDs { VBO_Sphere, EBO_Sphere, NumBuffers };
+    void performSelection(int x, int y);
 
-	GLuint m_VAOs[NumVAOs];
-	GLuint m_Buffers[NumBuffers];
+    void updateSelectRay(const qglviewer::Vec&	point,
+                                           const qglviewer::Vec&	rayOrig,
+                                           const qglviewer::Vec&	rayDir);
 
-	// Render shaders & locations
-	QOpenGLShaderProgram *m_programRender;
-  int m_vPositionLocation;
-	int m_vNormalLocation;
-  int m_projMatrixLocation;
-  int m_mvMatrixLocation;
-	int	m_normalMatrixLocation;
+    // VAOs and VBOs
+    enum VAO_IDs { VAO_Cube, VAO_CubesPicking, NumVAOs };
+    enum Buffer_IDs { VBO_Cube, EBO_Cube, NumBuffers };
 
+    GLuint m_VAOs[NumVAOs];
+    GLuint m_Buffers[NumBuffers];
 
+    // Render shaders & locations
+    QOpenGLShaderProgram *m_programRender;
+    int m_vPositionLocation;
+    int m_vNormalLocation;
+    int m_projMatrixLocation;
+    int m_mvMatrixLocation;
+    int m_normalMatrixLocation;
+
+    // Picking shaders & locations
+    QOpenGLShaderProgram *m_programPicking;
+    int m_vPositionLocationPicking;
+    int m_colorLocationPicking;
+    int m_projMatrixLocationPicking;
+    int m_mvMatrixLocationPicking;
+
+    // Picking
+    int m_selectedCube;
 };
 
 #endif // SIMPLEVIEWER_H

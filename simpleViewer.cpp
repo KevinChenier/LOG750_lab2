@@ -26,71 +26,66 @@ using namespace std;
 #include <QVector3D>
 #include <QQueue>
 
-
-
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 namespace
 {
- // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
-  const int numVerticePerCube = 24 ;
-  const int numCubeRow = 10 ;
-   const int numCubeCol = 15 ;
-        int numCube = numCubeRow*numCubeCol;
-  const int numIndicePerCube = 34 ;
-   int numVertices =numCube*numVerticePerCube;
-   int numIndices = numIndicePerCube*numCube;
-    // set root cube with dimArret = 0
-   // rootCube is not the first cube.
-   Cube rootCube = Cube(0.0f) ;
+    // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
+    const int numVerticePerCube = 24;
+    const int numCubesPerRow = 10;
+    const int numCubesPerCol = 10;
+    int numCubes = numCubesPerRow * numCubesPerCol;
+    const int numIndicePerCube = 34;
+    int numVertices = numCubes * numVerticePerCube;
+    int numIndices = numCubes * numIndicePerCube;
 
+    // rootCube is not the first cube.
+    Cube rootCube = Cube();
 }
 
 Viewer::Viewer()
-{}
+    : m_selectedCube(-1)
+{
+}
 
 Viewer::~Viewer()
 {
-  cleanup();
+    cleanup();
 }
 
 void Viewer::cleanup()
 {
-  makeCurrent();
+    makeCurrent();
 
-  // Delete shaders
+    // Delete shaders
     delete m_programRender;
-  m_programRender = nullptr;
+    m_programRender = nullptr;
 
-  // Delete buffers
-  glDeleteBuffers(NumBuffers, m_Buffers);
-  glDeleteVertexArrays(NumVAOs, m_VAOs);
+    // Delete buffers
+    glDeleteBuffers(NumBuffers, m_Buffers);
+    glDeleteVertexArrays(NumVAOs, m_VAOs);
 
-  doneCurrent();
+    doneCurrent();
 }
 
 void Viewer::draw()
 {
-  // Bind our vertex/fragment shaders
+    // Bind our vertex/fragment shaders
     m_programRender->bind();
 
-  // Get projection and camera transformations
-  QMatrix4x4 projectionMatrix;
-  QMatrix4x4 modelViewMatrix;
-  camera()->getProjectionMatrix(projectionMatrix);
-  camera()->getModelViewMatrix(modelViewMatrix);
+    // Get projection and camera transformations
+    QMatrix4x4 projectionMatrix;
+    QMatrix4x4 modelViewMatrix;
+    camera()->getProjectionMatrix(projectionMatrix);
+    camera()->getModelViewMatrix(modelViewMatrix);
 
+    m_programRender->setUniformValue(m_projMatrixLocation, projectionMatrix);
+    m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
+    m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
 
-  m_programRender->setUniformValue(m_projMatrixLocation, projectionMatrix);
-  m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
-  m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
-
-  // Draw the sphere
-  // Note: Because we are using an index buffer, we need to call glDrawElements instead
-  // of glDrawArrays.
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glBindVertexArray(m_VAOs[VAO_Sphere]);
-  glDrawElements(GL_TRIANGLE_STRIP, numIndices, GL_UNSIGNED_INT, nullptr);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBindVertexArray(m_VAOs[VAO_Cube]);
+    glDrawElements(GL_TRIANGLE_STRIP, numIndices, GL_UNSIGNED_INT, nullptr);
 }
 
 void Viewer::init()
@@ -98,39 +93,40 @@ void Viewer::init()
     setMouseBinding(Qt::ShiftModifier, Qt::LeftButton, CAMERA, NO_MOUSE_ACTION);
 
     // Initialize openGL
-  connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &Viewer::cleanup);
-  initializeOpenGLFunctions();
+    connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &Viewer::cleanup);
+    initializeOpenGLFunctions();
 
     // Init shaders
     initRenderShaders();
+    initPickingShaders();
 
     // Create our VertexArrays Objects and VertexBuffer Objects
     glGenVertexArrays(NumVAOs, m_VAOs);
     glGenBuffers(NumBuffers, m_Buffers);
-    setSceneRadius(10);          // scene has a 100 OpenGL units radius
+    setSceneRadius(10);          // scene has a 10 OpenGL units radius
     camera()->showEntireScene();
     initScene();
-    initGeometrySphere();
+    initGeometryCube();
 
     // Init GL properties
     glPointSize(10.0f);
-
 }
 
 void Viewer::initRenderShaders()
 {
     // Load vertex and fragment shaders
     m_programRender = new QOpenGLShaderProgram;
-  if (!m_programRender->addShaderFromSourceFile(QOpenGLShader::Vertex, "basicShader.vert")) {
+    if (!m_programRender->addShaderFromSourceFile(QOpenGLShader::Vertex, "basicShader.vert")) {
         cerr << "Unable to load Shader" << endl
                  << "Log file:" << endl;
         qDebug() << m_programRender->log();
     }
-  if (!m_programRender->addShaderFromSourceFile(QOpenGLShader::Fragment, "basicShader.frag")) {
+    if (!m_programRender->addShaderFromSourceFile(QOpenGLShader::Fragment, "basicShader.frag")) {
         cerr << "Unable to load Shader" << endl
                  << "Log file:" << endl;
         qDebug() << m_programRender->log();
     }
+
     m_programRender->link();
     m_programRender->bind();	// Note: This is equivalent to glUseProgram(programId());
 
@@ -152,144 +148,265 @@ void Viewer::initRenderShaders()
         qDebug() << "Unable to find shader location for " << "normalMatrix";
 }
 
-void Viewer::initGeometrySphere()
+void Viewer::initPickingShaders()
 {
-  // Note: To ease the sphere creation, we use an index (aka elements) buffer. This allows us to create
-  //			 each vertex once. Afterward, faces are created by specifying the index of the three vertices
-  //			 inside the index buffer. For example, a 2D quad could be drawn using the following vertex and
-  //       index buffers:
-  //
-  //			 vertices[4][2] = {{-1,-1},{1,-1},{1,1},{-1,1}};
-  //       indices[2*3] = {0, 1, 3, 1, 2, 3};
-  //
-  //       In this example, the vertices buffer contains 4 vertices, and the indices buffer contains two
-  //       triangles formed by the vertices (vertices[0], vertices[1], vertices[3]) and (vertices[1],
-  //       vertices[2], vertices[3]) respectively.
-  //
-  //       Also note that indices are stored in a different type of buffer called Element Array Buffer.
+    // Load vertex and fragment shaders
+    m_programPicking = new QOpenGLShaderProgram;
+    if (!m_programPicking->addShaderFromSourceFile(QOpenGLShader::Vertex, "constantColor.vert")) {
+        cerr << "Unable to load Shader" << endl
+                 << "Log file:" << endl;
+        qDebug() << m_programPicking->log();
+    }
+    if (!m_programPicking->addShaderFromSourceFile(QOpenGLShader::Fragment, "constantColor.frag")) {
+        cerr << "Unable to load Shader" << endl
+                 << "Log file:" << endl;
+        qDebug() << m_programPicking->log();
+    }
+    m_programPicking->link();
+    m_programPicking->bind();	// Note: This is equivalent to glUseProgram(programId());
 
+    // Specify shader input paramters
+    // The strings "vPosition", "mvMatrix", etc. have to match an attribute name in the vertex shader.
+    if ((m_vPositionLocationPicking = m_programPicking->attributeLocation("vPosition")) < 0)
+        qDebug() << "Unable to find shader location for " << "vPosition";
 
+    if ((m_colorLocationPicking = m_programPicking->uniformLocation("color")) < 0)
+        qDebug() << "Unable to find shader location for " << "color";
 
+    if ((m_mvMatrixLocationPicking = m_programPicking->uniformLocation("mvMatrix")) < 0)
+        qDebug() << "Unable to find shader location for " << "mvMatrix";
 
+    if ((m_projMatrixLocationPicking = m_programPicking->uniformLocation("projMatrix")) < 0)
+        qDebug() << "Unable to find shader location for " << "projMatrix";
+}
 
-  // Create sphere vertices and faces
-  GLfloat vertices[numVertices][3];
-  GLfloat normals[numVertices][3];
-  // need to implement
-  GLint indices[numIndices];
+void Viewer::initGeometryCube()
+{
+    // Create vertices and faces
+    GLfloat vertices[numVertices][3];
+    GLfloat normals[numVertices][3];
 
-  // Generate surrounding vertices
-  int v = 0;
+    // need to implement
+    GLint indices[numIndices];
 
-  //IMPORTANT: rootCube is not the first cube.
-  //IMPORTANT: TODO getAllVertices(numVertices) on rootCube shoulbe return
-  // numVertices inculde vertices of child child (see pattern vistor)
-  // don't forget update numCube after add an cube when the application is up
+    // Generate surrounding vertices
+    int v = 0;
 
+    //IMPORTANT: rootCube is not the first cube.
+    //IMPORTANT: TODO getAllVertices(numVertices) on rootCube shoulbe return
+    // numVertices include vertices of child (see pattern vistor)
+    // Don't forget to update numCubes after adding a cube when the application is up
 
-   QQueue<Cube> childrenRootCube = rootCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
+    QQueue<Cube> childrenRootCube = rootCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
 
-   /*
-    // TODO: write recursive method with pattern vistor to get getAllVertices(numVertices)
-
-        while (!vertices.isEmpty()){
-            QVector3D currentVertice = vertices.dequeue();
-            vertices[v][0] =currentVertice.x();
-            vertices[v][1] =currentVertice.y();
-            vertices[v][2] =currentVertice.z();
-
-            QVector3D currentVerticeN = currentVertice.normalized();
-            normals[v][0] =currentVerticeN.x();
-            normals[v][1] =currentVerticeN.y();
-            normals[v][2] =currentVerticeN.z();
-
-            v++;
-    */
-  // with good comception this line will be deleted
-  int numCubeInRootCube = rootCube.getQueueCube().length();
-  for (int i=0; i<numCube; ++i)
-  {
-    if (v<numVertices && i< numCubeInRootCube){
-
-        QQueue<QVector3D> cubeVertices = childrenRootCube[i].getVertices() ;
-
-        while (!cubeVertices.isEmpty()){
-            QVector3D currentVertice = cubeVertices.dequeue();
-
-            vertices[v][0] =currentVertice.x();
-            vertices[v][1] =currentVertice.y();
-            vertices[v][2] =currentVertice.z();
-
-            QVector3D currentVerticeN = currentVertice.normalized();
-            normals[v][0] =currentVerticeN.x();
-            normals[v][1] =currentVerticeN.y();
-            normals[v][2] =currentVerticeN.z();
     /*
-            qInfo() << "vertices" << v;
-            qInfo() << QString::number(vertices[v][0]);
-            qInfo() << QString::number(vertices[v][1]);
-            qInfo() << QString::number(vertices[v][2]);
-*/
-            v++;
+    // TODO: write recursive method with pattern visitor to get getAllVertices(numVertices)
+
+    while (!vertices.isEmpty()){
+        QVector3D currentVertice = vertices.dequeue();
+        vertices[v][0] =currentVertice.x();
+        vertices[v][1] =currentVertice.y();
+        vertices[v][2] =currentVertice.z();
+
+        QVector3D currentVerticeN = currentVertice.normalized();
+        normals[v][0] =currentVerticeN.x();
+        normals[v][1] =currentVerticeN.y();
+        normals[v][2] =currentVerticeN.z();
+
+        v++;
+    }
+    */
+
+    // With good conception this line will be deleted
+    int numCubeInRootCube = rootCube.getQueueCube().length();
+    for (int i=0; i<numCubes; ++i)
+    {
+        if (v<numVertices && i< numCubeInRootCube){
+
+            QQueue<QVector3D> cubeVertices = childrenRootCube[i].getVertices() ;
+
+            while (!cubeVertices.isEmpty()) {
+                QVector3D currentVertice = cubeVertices.dequeue();
+
+                vertices[v][0] =currentVertice.x();
+                vertices[v][1] =currentVertice.y();
+                vertices[v][2] =currentVertice.z();
+
+                QVector3D currentVerticeN = currentVertice.normalized();
+                normals[v][0] =currentVerticeN.x();
+                normals[v][1] =currentVerticeN.y();
+                normals[v][2] =currentVerticeN.z();
+
+                //qInfo() << "vertices" << v;
+                //qInfo() << QString::number(vertices[v][0]);
+                //qInfo() << QString::number(vertices[v][1]);
+                //qInfo() << QString::number(vertices[v][2]);
+
+                v++;
+            }
         }
     }
 
-  }
+    for (int i=0; i<numIndices; ++i)
+    {
+        // With good conception this line will be deleted
+        indices[i] = Cube().indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
 
-  for (int i=0; i<numIndices; ++i)
-  {
-       // with good comception this line will be deleted
-    indices[i] = Cube().indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
+        //qInfo() << "indec " << i ;
+        //qInfo() << QString::number(indices[i]);
+    }
 
-    /*qInfo() << "indec " << i ;
-    qInfo() << QString::number(indices[i]);*/
-  }
+    // Fill vertex VBO
+    GLsizeiptr offsetVertices = 0;
+    GLsizeiptr offsetNormals = sizeof(vertices);
+    GLsizeiptr dataSize = offsetNormals + GLsizeiptr(sizeof(normals));
 
+    glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[VBO_Cube]);
+    glBufferData(GL_ARRAY_BUFFER, dataSize, nullptr, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, offsetVertices, sizeof(vertices), vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, offsetNormals, sizeof(normals), normals);
 
+    // Set VAO
+    glBindVertexArray(m_VAOs[VAO_Cube]);
+    glVertexAttribPointer(GLuint(m_vPositionLocation), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
+    glEnableVertexAttribArray(GLuint(m_vPositionLocation));
 
+    glVertexAttribPointer(GLuint(m_vNormalLocation), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetNormals));
+    glEnableVertexAttribArray(GLuint(m_vNormalLocation));
 
-  // Fill vertex VBO
-  GLsizeiptr offsetVertices = 0;
-  GLsizeiptr offsetNormals = sizeof(vertices);
-  GLsizeiptr dataSize = offsetNormals + GLsizeiptr(sizeof(normals));
+    // Fill in indices EBO
+    // Note: The current VAO will remember the call to glBindBuffer for a GL_ELEMENT_ARRAY_BUFFER.
+    // However, we will need to call glDrawElements() instead of glDrawArrays().
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
+    // need add indices
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
 
-  glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[VBO_Sphere]);
-  glBufferData(GL_ARRAY_BUFFER, dataSize, nullptr, GL_STATIC_DRAW);
-  glBufferSubData(GL_ARRAY_BUFFER, offsetVertices, sizeof(vertices), vertices);
-  glBufferSubData(GL_ARRAY_BUFFER, offsetNormals, sizeof(normals), normals);
-
-  // Set VAO
-  glBindVertexArray(m_VAOs[VAO_Sphere]);
-  glVertexAttribPointer(GLuint(m_vPositionLocation), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
-  glEnableVertexAttribArray(GLuint(m_vPositionLocation));
-
-  glVertexAttribPointer(GLuint(m_vNormalLocation), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetNormals));
-  glEnableVertexAttribArray(GLuint(m_vNormalLocation));
-
-  // Fill in indices EBO
-  // Note: The current VAO will remember the call to glBindBuffer for a GL_ELEMENT_ARRAY_BUFFER.
-  //			 However, we will need to call glDrawElements() instead of glDrawArrays().
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Sphere]);
-  // need add indices
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-   glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
+    // Create VAO for cubes during picking (with constant shader)
+    glBindVertexArray(m_VAOs[VAO_CubesPicking]);
+    glVertexAttribPointer(GLuint(m_vPositionLocationPicking), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
+    glEnableVertexAttribArray(GLuint(m_vPositionLocationPicking));
 }
+
 void Viewer::initScene()
 {
-    Cube tmp = Cube();
-    float dimArret = tmp.getDimArret();
-
-
-    for (int i=0; i<numCubeRow; ++i)
+    const float dimArret = Cube::dimArret;
+    for (int i=0; i < numCubesPerRow; ++i)
     {
-        for (int j=0; j<numCubeCol; ++j)
+        for (int j=0; j < numCubesPerCol; ++j)
         {
-             Cube localCube = Cube();
-             QMatrix4x4 firstTranformation ;
-             firstTranformation.translate(QVector3D(i*dimArret,-10*dimArret,j*dimArret));
-             localCube.addT(firstTranformation);
-             rootCube.addChild(localCube);
+            Cube currentCube = Cube();
+            QMatrix4x4 cubeTranformation ;
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret));
+            currentCube.addTransformation(cubeTranformation);
+            rootCube.addChild(currentCube);
         }
     }
 }
 
+void Viewer::mousePressEvent(QMouseEvent *e)
+{
+    QGLViewer::mousePressEvent(e);
+    std::cout << "Viewer::mousePressEvent" << std::endl;
+
+    if ((e->button() == Qt::LeftButton) && (e->modifiers() == Qt::ShiftModifier))
+    {
+        performSelection(e->x(), e->y());
+        update();
+    }
+}
+
+void Viewer::performSelection(int x, int y)
+{
+    // Map (dictionnary) used to store the correspondences between colors and spiral number.
+    QMap<unsigned int, int> myMap;
+    // Identificator ID used as a color for rendering and as a key for the map.
+    QRgb id = 0;
+
+    makeCurrent();	// This allows us to use OpenGL functions outside of Viewer::draw()
+
+    std::cout << "Viewer::performSelection(" << x << ", " << y << ")" << std::endl;
+
+    // Selection is performed by drawing the spirals with a color that matches their ID
+    // Note: Because we are drawing outside the draw() function, the back buffer is not
+    //       swapped after this function is called.
+
+    // Clear back buffer. Since we set a differet clear color, we save the
+    // previous value and restore it after the backbuffer has been cleared.
+    float clearColor[4];
+    glGetFloatv(GL_COLOR_CLEAR_VALUE, clearColor);
+
+    glClearColor(1,1,1,1);	// This value should not match any existing index
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+
+    // Bind our vertex/fragment shaders
+    m_programPicking->bind();
+
+    // Get projection and camera transformations
+    QMatrix4x4 projectionMatrix;
+    QMatrix4x4 modelViewMatrix;
+    camera()->getProjectionMatrix(projectionMatrix);
+    camera()->getModelViewMatrix(modelViewMatrix);
+
+    const float dimArret = Cube::dimArret;
+
+    // Draw the cubes
+    glBindVertexArray(m_VAOs[VAO_CubesPicking]);
+    m_programPicking->setUniformValue(m_projMatrixLocationPicking, projectionMatrix);
+    for (int i=0; i < numCubesPerRow; ++i)
+    {
+        for (int j=0; j < numCubesPerCol; ++j)
+        {
+            // Save transformations
+            QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
+
+            // Translate spiral
+            modelViewMatrix.translate(QVector3D(i*dimArret, 0, j*dimArret));
+
+            // For convenience, convert the ID to a color object.
+            QColor color;
+            color.setRgba(id);
+            // Get the equivalent of the color as an unsigned long.
+            unsigned int key = color.rgba();
+            // Insert the key (unsigned long) in the map.
+            myMap.insert(key, id);
+            // Set the color value for the shader.
+            m_programPicking->setUniformValue(m_colorLocationPicking, color);
+
+            // Draw the cubes
+            m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, numVerticePerCube);
+
+            // Restore previous transformations
+            modelViewMatrix = originalModelViewMatrix;
+            // Increment the ID, as it is not in use.
+            id++;
+        }
+    }
+    // Wait until all drawing commands are done
+    glFinish();
+
+    // Read the pixel under the cursor
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    unsigned char pixelData[4];
+    glReadPixels(x, camera()->screenHeight()-1-y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
+
+    std::cout << "Selected pixelData: " << int(pixelData[0]) << ", "
+                                                                            << int(pixelData[1]) << ", "
+                                                                            << int(pixelData[2]) << ", "
+                                                                            << int(pixelData[3]) << std::endl;
+
+    // For convenience, construct a color object matching what was read in the frame buffer.
+    QColor pickedColor(pixelData[0], pixelData[1], pixelData[2], pixelData[3]);
+    // Get the equivalent of the color as an unsigned int. This is the key we stored earlier in the map.
+    unsigned int key = pickedColor.rgba();
+    // Get the value matching the key.
+    int value = myMap.value(key, -1);
+    m_selectedCube = value;
+    std::cout << "m_selectedCube: " << m_selectedCube << std::endl;
+
+    // We are done with OpenGL
+    doneCurrent();
+}

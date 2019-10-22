@@ -3,7 +3,6 @@ uniform mat4 mvMatrix;
 uniform mat4 projMatrix;
 uniform mat3 normalMatrix;
 in vec4 vPosition;
-in vec4 tranform;
 in vec3 vNormal;
 out vec3 fNormal;
 out vec3 fPosition;
@@ -16,4 +15,3 @@ main()
      fPosition = vEyeCoord.xyz;
      fNormal = normalMatrix*vNormal;
 }
-

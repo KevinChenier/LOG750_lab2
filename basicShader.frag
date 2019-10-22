@@ -18,6 +18,6 @@ main()
     float specular = 0.0;//0.1*pow(max(0.0, dot(Rl, nviewDirection)), 16);
 
     // Compute final color
-    vec3 color = vec3(0.333,0.4197,0.18);
+    vec3 color = vec3(0.0, 1.0, 0.0);
     fColor = vec4(color * (diffuse +  specular), 1);
 }

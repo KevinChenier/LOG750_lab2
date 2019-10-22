@@ -1,10 +1,20 @@
 #include <node.h>
-QMatrix4x4 Node::getTransformation(){
-    QMatrix4x4 t;
-    t.setToIdentity();
-    while (!stackTransformation.isEmpty()){
-        t*=stackTransformation.pop();
+
+Node::Node()
+{
+    QMatrix4x4 tmpTransformation ;
+    tmpTransformation.setToIdentity();
+    stackTransformation.append(tmpTransformation);
+}
+
+QMatrix4x4 Node::getTransformation()
+{
+    QMatrix4x4 transformation;
+    transformation.setToIdentity();
+
+    while (!stackTransformation.isEmpty()) {
+        transformation*=stackTransformation.pop();
     }
-    return t ;
+    return transformation;
 }
 

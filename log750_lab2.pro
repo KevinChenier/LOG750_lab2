@@ -48,7 +48,9 @@ HEADERS  += QGLViewer/camera.h \
 
 DISTFILES += \
     basicShader.frag \
-    basicShader.vert
+    basicShader.vert \
+    constantColor.frag \
+    constantColor.vert
 
 FORMS += QGLViewer/ImageInterface.ui mainwindow.ui
 
