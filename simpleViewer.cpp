@@ -40,7 +40,7 @@ namespace
     int numIndices = numCubes * numIndicePerCube;
 
     // rootCube is not the first cube.
-    Cube rootCube = Cube();
+    QQueue<Cube> graph ;
 }
 
 Viewer::Viewer()
@@ -194,8 +194,8 @@ void Viewer::initGeometryCube()
     //IMPORTANT: TODO getAllVertices(numVertices) on rootCube shoulbe return
     // numVertices include vertices of child (see pattern vistor)
     // Don't forget to update numCubes after adding a cube when the application is up
-
-    QQueue<Cube> childrenRootCube = rootCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
+    Cube tmpCube = Cube() ;
+    //QQueue<Cube> childrenRootCube = tmpCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
 
     /*
     // TODO: write recursive method with pattern visitor to get getAllVertices(numVertices)
@@ -216,17 +216,17 @@ void Viewer::initGeometryCube()
     */
 
     // With good conception this line will be deleted
-    int numCubeInRootCube = rootCube.getQueueCube().length();
+    int numCubeInRootCube = graph.length();
     for (int i=0; i<numCubes; ++i)
     {
         if (v<numVertices && i< numCubeInRootCube){
 
-            Cube currentCube = childrenRootCube[i] ;
+            Cube currentCube = graph.at(i) ;
              QQueue<QVector3D> cubeVertices = currentCube.getVertices() ;
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
-                QVector3D currentNormal =  currentCube.Normales[v%numVerticePerCube] ;
+                QVector3D currentNormal =  tmpCube.Normales[v%numVerticePerCube] ;
 
                 vertices[v][0] =currentVertice.x();
                 vertices[v][1] =currentVertice.y();
@@ -248,7 +248,7 @@ void Viewer::initGeometryCube()
 
     for (int i=0; i<numIndices; ++i)
     {
-        indices[i] = rootCube.indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
+        indices[i] = tmpCube.indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
 
         //qInfo() << "indec " << i ;
         //qInfo() << QString::number(indices[i]);
@@ -299,7 +299,7 @@ void Viewer::initScene()
             QMatrix4x4 cubeTranformation ;
             cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret));
             currentCube.addTransformation(cubeTranformation);
-            rootCube.addChild(currentCube);
+            graph.append(currentCube);
         }
     }
 }

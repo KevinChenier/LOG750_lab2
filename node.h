@@ -12,10 +12,22 @@ public:
     explicit Node();
 
     // Getters
+    virtual QQueue<QVector3D> getVertices(){};
     QMatrix4x4 getTransformation();
     QStack<QMatrix4x4> getStackTransformation() { return stackTransformation; }
+    QQueue<Node *> getNodes() { return nodes; }
+    Node * getChild(int index) { return nodes.at(index); }
 
-    void addTransformation(QMatrix4x4 tmpTransformation) { stackTransformation.append(tmpTransformation); }
+    void addChild(Node * child) { nodes.append(child); }
+
+    void addTransformation(QMatrix4x4 tmpTransformation) {
+        stackTransformation.append(tmpTransformation);
+        int size = nodes.length();
+        for (int var = 0; var < size; ++var) {
+            nodes.at(var)->addTransformation(tmpTransformation);
+        }
+
+    }
 
     // all direction
     static constexpr QVector3D frontN = QVector3D(0,0,1) ;
@@ -29,6 +41,7 @@ private:
     QStack<QMatrix4x4> stackTransformation;
 
 protected:
+    QQueue<Node * > nodes;
 
 };
 

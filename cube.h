@@ -13,11 +13,11 @@ public:
     explicit Cube ();
 
     // Getters
-    QQueue<QVector3D> getVertices();
-    QQueue<Cube> getQueueCube() { return queueCube; }
-    Cube getChild(int index) { Cube n = queueCube[index]; return n; }
+    QQueue<QVector3D> getVertices() override ;
+   // QQueue<Cube> getQueueCube() { return queueCube; }
+    //Cube getChild(int index) { Cube n = queueCube[index]; return n; }
 
-    void addChild(Cube child) { queueCube.append(child); }
+    //void addChild(Cube child) { queueCube.append(child); }
 
     // source : https://github.com/in2gpu/in2gpu_tutorials/blob/fcdfe647183bf29b44bc9fa7e1b76d7a1dac27a2/in2gpu_tutorials/Chapter_2/c2_2_DrawCubeIndex/CubeIndex.cpp
     GLint indices [36] =
@@ -38,13 +38,15 @@ public:
         upperN, upperN, upperN, upperN,  //upper
         bottomN, bottomN, bottomN, bottomN, //bottom
     };
-
+    static constexpr QVector3D testNormales[24]={
+        frontN, frontN, frontN, frontN,   //front
+        rightN, rightN, rightN, rightN,   //right
+        backN, backN, backN,    backN,  //back
+        leftN, leftN, leftN, leftN,  //left
+        upperN, upperN, upperN, upperN,  //upper
+        bottomN, bottomN, bottomN, bottomN, //bottom
+    };
     static constexpr float dimArret = 1.0f;
-
-
-
-private:
-    QQueue<Cube> queueCube;
 
 };
 
