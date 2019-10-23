@@ -32,8 +32,8 @@ namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     const int numVerticePerCube = 24;
-    const int numCubesPerRow = 1;
-    const int numCubesPerCol = 1;
+    const int numCubesPerRow = 10;
+    const int numCubesPerCol = 10;
     int numCubes = numCubesPerRow * numCubesPerCol;
     const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;
@@ -182,11 +182,9 @@ void Viewer::initPickingShaders()
 
 void Viewer::initGeometryCube()
 {
-    // Create vertices and faces
+    // Create vertices, faces and indices
     GLfloat vertices[numVertices][3];
     GLfloat normals[numVertices][3];
-
-    // need to implement
     GLint indices[numIndices];
 
     // Generate surrounding vertices
@@ -249,8 +247,7 @@ void Viewer::initGeometryCube()
 
     for (int i=0; i<numIndices; ++i)
     {
-        // With good conception this line will be deleted
-        indices[i] = Cube().indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
+        indices[i] = rootCube.indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
 
         //qInfo() << "indec " << i ;
         //qInfo() << QString::number(indices[i]);
@@ -268,6 +265,7 @@ void Viewer::initGeometryCube()
 
     // Set VAO
     glBindVertexArray(m_VAOs[VAO_Cube]);
+
     glVertexAttribPointer(GLuint(m_vPositionLocation), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
     glEnableVertexAttribArray(GLuint(m_vPositionLocation));
 
@@ -278,14 +276,15 @@ void Viewer::initGeometryCube()
     // Note: The current VAO will remember the call to glBindBuffer for a GL_ELEMENT_ARRAY_BUFFER.
     // However, we will need to call glDrawElements() instead of glDrawArrays().
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
-    // need add indices
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
 
     // Create VAO for cubes during picking (with constant shader)
     glBindVertexArray(m_VAOs[VAO_CubesPicking]);
+
     glVertexAttribPointer(GLuint(m_vPositionLocationPicking), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
     glEnableVertexAttribArray(GLuint(m_vPositionLocationPicking));
+
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
 }
 
 void Viewer::initScene()
