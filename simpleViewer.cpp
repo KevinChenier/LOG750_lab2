@@ -221,19 +221,20 @@ void Viewer::initGeometryCube()
     {
         if (v<numVertices && i< numCubeInRootCube){
 
-            QQueue<QVector3D> cubeVertices = childrenRootCube[i].getVertices() ;
+            Cube currentCube = childrenRootCube[i] ;
+             QQueue<QVector3D> cubeVertices = currentCube.getVertices() ;
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
+                QVector3D currentNormal =  currentCube.Normales[v%numVerticePerCube] ;
 
                 vertices[v][0] =currentVertice.x();
                 vertices[v][1] =currentVertice.y();
                 vertices[v][2] =currentVertice.z();
 
-                QVector3D currentVerticeN = currentVertice.normalized();
-                normals[v][0] =currentVerticeN.x();
-                normals[v][1] =currentVerticeN.y();
-                normals[v][2] =currentVerticeN.z();
+                normals[v][0] = currentNormal.x();
+                normals[v][1] =currentNormal.y();
+                normals[v][2] =currentNormal.z();
 
                 //qInfo() << "vertices" << v;
                 //qInfo() << QString::number(vertices[v][0]);

@@ -30,10 +30,22 @@ public:
         20, 21, 22, 20, 22, 23 //bottom
     };
 
+    QVector3D Normales[24]={
+        frontN, frontN, frontN, frontN,   //front
+        rightN, rightN, rightN, rightN,   //right
+        backN, backN, backN,    backN,  //back
+        leftN, leftN, leftN, leftN,  //left
+        upperN, upperN, upperN, upperN,  //upper
+        bottomN, bottomN, bottomN, bottomN, //bottom
+    };
+
     static constexpr float dimArret = 1.0f;
+
+
 
 private:
     QQueue<Cube> queueCube;
+
 };
 
 #endif // CUBE_H
