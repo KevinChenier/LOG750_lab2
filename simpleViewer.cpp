@@ -197,24 +197,6 @@ void Viewer::initGeometryCube()
 
     QQueue<Cube> childrenRootCube = rootCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
 
-    /*
-    // TODO: write recursive method with pattern visitor to get getAllVertices(numVertices)
-
-    while (!vertices.isEmpty()){
-        QVector3D currentVertice = vertices.dequeue();
-        vertices[v][0] =currentVertice.x();
-        vertices[v][1] =currentVertice.y();
-        vertices[v][2] =currentVertice.z();
-
-        QVector3D currentVerticeN = currentVertice.normalized();
-        normals[v][0] =currentVerticeN.x();
-        normals[v][1] =currentVerticeN.y();
-        normals[v][2] =currentVerticeN.z();
-
-        v++;
-    }
-    */
-
     // With good conception this line will be deleted
     int numCubeInRootCube = rootCube.getQueueCube().length();
     for (int i=0; i<numCubes; ++i)
@@ -295,8 +277,8 @@ void Viewer::initScene()
         for (int j=0; j < numCubesPerCol; ++j)
         {
             Cube currentCube = Cube();
-            QMatrix4x4 cubeTranformation ;
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret));
+            QMatrix4x4 cubeTranformation;
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
             currentCube.addTransformation(cubeTranformation);
             rootCube.addChild(currentCube);
         }
