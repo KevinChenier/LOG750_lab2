@@ -32,8 +32,8 @@ namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     const int numVerticePerCube = 24;
-    const int numCubesPerRow = 1;
-    const int numCubesPerCol = 1;
+    const int numCubesPerRow = 10;
+    const int numCubesPerCol = 10;
     int numCubes = numCubesPerRow * numCubesPerCol;
     const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;

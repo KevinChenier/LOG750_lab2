@@ -12,39 +12,39 @@ QQueue<QVector3D> Cube::getVertices()
        QMatrix4x4 t = getTransformation();
 
        //front
-           vertices.append(t*QVector3D(-1.0, -1.0, 1.0));
-           vertices.append(t*QVector3D( 1.0, -1.0, 1.0));
-           vertices.append(t*QVector3D( 1.0,  1.0, 1.0));
-           vertices.append(t*QVector3D(-1.0,  1.0, 1.0));
+           vertices.append(t*QVector3D(-0.5, -0.5, 0.5));
+           vertices.append(t*QVector3D( 0.5, -0.5, 0.5));
+           vertices.append(t*QVector3D( 0.5,  0.5, 0.5));
+           vertices.append(t*QVector3D(-0.5,  0.5, 0.5));
 
            //right
-           vertices.append(t*QVector3D(1.0,  1.0,   1.0));
-           vertices.append(t*QVector3D(1.0,  1.0,  -1.0));
-           vertices.append(t*QVector3D(1.0, -1.0,  -1.0));
-           vertices.append(t*QVector3D(1.0, -1.0,   1.0));
+           vertices.append(t*QVector3D(0.5,  0.5,   0.5));
+           vertices.append(t*QVector3D(0.5,  0.5,  -0.5));
+           vertices.append(t*QVector3D(0.5, -0.5,  -0.5));
+           vertices.append(t*QVector3D(0.5, -0.5,   0.5));
 
            //back
-           vertices.append(t*QVector3D(-1.0, -1.0, -1.0));
-           vertices.append(t*QVector3D( 1.0, -1.0, -1.0));
-           vertices.append(t*QVector3D( 1.0,  1.0, -1.0));
-           vertices.append(t*QVector3D(-1.0,  1.0, -1.0));
+           vertices.append(t*QVector3D(-0.5, -0.5, -0.5));
+           vertices.append(t*QVector3D( 0.5, -0.5, -0.5));
+           vertices.append(t*QVector3D( 0.5,  0.5, -0.5));
+           vertices.append(t*QVector3D(-0.5,  0.5, -0.5));
 
            //left
-           vertices.append(t*QVector3D(-1.0, -1.0, -1.0));
-           vertices.append(t*QVector3D(-1.0, -1.0,  1.0));
-           vertices.append(t*QVector3D(-1.0,  1.0,  1.0));
-           vertices.append(t*QVector3D(-1.0,  1.0, -1.0));
+           vertices.append(t*QVector3D(-0.5, -0.5, -0.5));
+           vertices.append(t*QVector3D(-0.5, -0.5,  0.5));
+           vertices.append(t*QVector3D(-0.5,  0.5,  0.5));
+           vertices.append(t*QVector3D(-0.5,  0.5, -0.5));
 
            //upper
-           vertices.append(t*QVector3D( 1.0, 1.0,  1.0));
-           vertices.append(t*QVector3D(-1.0, 1.0,  1.0));
-           vertices.append(t*QVector3D(-1.0, 1.0, -1.0));
-           vertices.append(t*QVector3D( 1.0, 1.0, -1.0));
+           vertices.append(t*QVector3D( 0.5, 0.5,  0.5));
+           vertices.append(t*QVector3D(-0.5, 0.5,  0.5));
+           vertices.append(t*QVector3D(-0.5, 0.5, -0.5));
+           vertices.append(t*QVector3D( 0.5, 0.5, -0.5));
            //bottom
-           vertices.append(t*QVector3D(-1.0, -1.0, -1.0));
-           vertices.append(t*QVector3D( 1.0, -1.0, -1.0));
-           vertices.append(t*QVector3D( 1.0, -1.0,  1.0));
-           vertices.append(t*QVector3D(-1.0, -1.0,  1.0));
+           vertices.append(t*QVector3D(-0.5, -0.5, -0.5));
+           vertices.append(t*QVector3D( 0.5, -0.5, -0.5));
+           vertices.append(t*QVector3D( 0.5, -0.5,  0.5));
+           vertices.append(t*QVector3D(-0.5, -0.5,  0.5));
 
     return vertices;
 }
