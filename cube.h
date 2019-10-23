@@ -30,7 +30,7 @@ public:
         20, 21, 22, 20, 22, 23 //bottom
     };
 
-    static constexpr float dimArret = 0.5f;
+    static constexpr float dimArret = 1.0f;
 
 private:
     QQueue<Cube> queueCube;

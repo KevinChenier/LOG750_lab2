@@ -361,7 +361,7 @@ void Viewer::performSelection(int x, int y)
             // Save transformations
             QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
 
-            // Translate spiral
+            // Translate cube
             modelViewMatrix.translate(QVector3D(i*dimArret, 0, j*dimArret));
 
             // For convenience, convert the ID to a color object.
