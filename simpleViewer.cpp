@@ -32,10 +32,10 @@ namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     const int numVerticePerCube = 24;
-    const int numCubesPerRow = 10;
-    const int numCubesPerCol = 10;
+    const int numCubesPerRow = 1;
+    const int numCubesPerCol = 1;
     int numCubes = numCubesPerRow * numCubesPerCol;
-    const int numIndicePerCube = 34;
+    const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;
     int numIndices = numCubes * numIndicePerCube;
 
@@ -83,9 +83,9 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
 
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
-    glDrawElements(GL_TRIANGLE_STRIP, numIndices, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
 }
 
 void Viewer::init()
