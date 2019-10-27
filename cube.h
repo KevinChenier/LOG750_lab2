@@ -38,14 +38,6 @@ public:
         upperN, upperN, upperN, upperN,  //upper
         bottomN, bottomN, bottomN, bottomN, //bottom
     };
-    static constexpr QVector3D testNormales[24]={
-        frontN, frontN, frontN, frontN,   //front
-        rightN, rightN, rightN, rightN,   //right
-        backN, backN, backN,    backN,  //back
-        leftN, leftN, leftN, leftN,  //left
-        upperN, upperN, upperN, upperN,  //upper
-        bottomN, bottomN, bottomN, bottomN, //bottom
-    };
     static constexpr float dimArret = 1.0f;
 
 };

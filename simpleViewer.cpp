@@ -31,7 +31,7 @@ using namespace std;
 namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
-    const int numVerticePerCube = 24;
+    const int numVerticePerCube = 36;
     const int numCubesPerRow = 10;
     const int numCubesPerCol = 10;
     int numCubes = numCubesPerRow * numCubesPerCol;
@@ -70,7 +70,6 @@ void Viewer::cleanup()
 
 void Viewer::draw()
 {
-    // Bind our vertex/fragment shaders
     m_programRender->bind();
 
     // Get projection and camera transformations
@@ -83,9 +82,12 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
-    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+    glDrawArrays(GL_TRIANGLES, 0, numVertices);
+
+   // performSelection(0,0);
+    //performSelection(0, 0);
 }
 
 void Viewer::init()
@@ -258,8 +260,8 @@ void Viewer::initGeometryCube()
     // Fill in indices EBO
     // Note: The current VAO will remember the call to glBindBuffer for a GL_ELEMENT_ARRAY_BUFFER.
     // However, we will need to call glDrawElements() instead of glDrawArrays().
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // Create VAO for cubes during picking (with constant shader)
     glBindVertexArray(m_VAOs[VAO_CubesPicking]);
@@ -337,6 +339,7 @@ void Viewer::performSelection(int x, int y)
     // Draw the cubes
     glBindVertexArray(m_VAOs[VAO_CubesPicking]);
     m_programPicking->setUniformValue(m_projMatrixLocationPicking, projectionMatrix);
+    QColor color;
     for (int i=0; i < numCubesPerRow; ++i)
     {
         for (int j=0; j < numCubesPerCol; ++j)
@@ -344,27 +347,28 @@ void Viewer::performSelection(int x, int y)
             // Save transformations
             QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
 
-            // Translate cube
+            // Translate cube (hypothese : need getT of cube)
             modelViewMatrix.translate(QVector3D(i*dimArret, 0, j*dimArret));
 
-            // For convenience, convert the ID to a color object.
-            QColor color;
-            color.setRgba(id);
-            // Get the equivalent of the color as an unsigned long.
-            unsigned int key = color.rgba();
-            // Insert the key (unsigned long) in the map.
-            myMap.insert(key, id);
-            // Set the color value for the shader.
-            m_programPicking->setUniformValue(m_colorLocationPicking, color);
+            for ( int n = 0 ; n < 6;n++) {
+                // For convenience, convert the ID to a color object.
+                color.setRgba(id);
+                // Get the equivalent of the color as an unsigned long.
+                unsigned int key = color.rgba();
+                // Insert the key (unsigned long) in the map.
+                myMap.insert(key, id);
+                // Set the color value for the shader.
+                m_programPicking->setUniformValue(m_colorLocationPicking, color);
 
-            // Draw the cubes
-            m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix);
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, numVerticePerCube);
-
-            // Restore previous transformations
-            modelViewMatrix = originalModelViewMatrix;
-            // Increment the ID, as it is not in use.
-            id++;
+                // Draw the cubes
+                m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix);
+                //glDrawArrays(GL_TRIANGLES,n*6,n*6+6);
+                glDrawArrays(GL_TRIANGLES,n*6,6);
+                // Restore previous transformations
+                modelViewMatrix = originalModelViewMatrix;
+                // Increment the ID, as it is not in use.
+                id++;
+            }
         }
     }
     // Wait until all drawing commands are done
