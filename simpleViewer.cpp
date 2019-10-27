@@ -1,18 +1,3 @@
-/****************************************************************************
- Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
- This file is part of the QGLViewer library version 2.3.6.
- http://www.libqglviewer.com - contact@libqglviewer.com
- This file may be used under the terms of the GNU General Public License
- versions 2.0 or 3.0 as published by the Free Software Foundation and
- appearing in the LICENSE file included in the packaging of this file.
- In addition, as a special exception, Gilles Debunne gives you certain
- additional rights, described in the file GPL_EXCEPTION in this package.
- libQGLViewer uses dual licensing. Commercial/proprietary software must
- purchase a libQGLViewer Commercial License.
- This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
- WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-*****************************************************************************/
-
 #include "simpleViewer.h"
 
 #include <QOpenGLShaderProgram>
@@ -31,7 +16,7 @@ using namespace std;
 namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
-    const int numVerticePerCube = 36;
+    const int numVerticePerCube = 24;
     const int numCubesPerRow = 10;
     const int numCubesPerCol = 10;
     int numCubes = numCubesPerRow * numCubesPerCol;
@@ -40,7 +25,7 @@ namespace
     int numIndices = numCubes * numIndicePerCube;
 
     // rootCube is not the first cube.
-    QQueue<Cube> graph ;
+     QQueue<Cube> graph;
 }
 
 Viewer::Viewer()
@@ -70,6 +55,7 @@ void Viewer::cleanup()
 
 void Viewer::draw()
 {
+    // Bind our vertex/fragment shaders
     m_programRender->bind();
 
     // Get projection and camera transformations
@@ -82,12 +68,9 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
 
-     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
-    glDrawArrays(GL_TRIANGLES, 0, numVertices);
-
-   // performSelection(0,0);
-    //performSelection(0, 0);
+    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
 }
 
 void Viewer::init()
@@ -196,8 +179,22 @@ void Viewer::initGeometryCube()
     //IMPORTANT: TODO getAllVertices(numVertices) on rootCube shoulbe return
     // numVertices include vertices of child (see pattern vistor)
     // Don't forget to update numCubes after adding a cube when the application is up
-    Cube tmpCube = Cube() ;
-    //QQueue<Cube> childrenRootCube = tmpCube.getQueueCube(); //QQueue<QVector3D> vertices = rootNode.getAllVertices(numVertices) ;
+
+
+    /*
+    // TODO: write recursive method with pattern visitor to get getAllVertices(numVertices)
+    while (!vertices.isEmpty()){
+        QVector3D currentVertice = vertices.dequeue();
+        vertices[v][0] =currentVertice.x();
+        vertices[v][1] =currentVertice.y();
+        vertices[v][2] =currentVertice.z();
+        QVector3D currentVerticeN = currentVertice.normalized();
+        normals[v][0] =currentVerticeN.x();
+        normals[v][1] =currentVerticeN.y();
+        normals[v][2] =currentVerticeN.z();
+        v++;
+    }
+    */
 
     // With good conception this line will be deleted
     int numCubeInRootCube = graph.length();
@@ -205,12 +202,12 @@ void Viewer::initGeometryCube()
     {
         if (v<numVertices && i< numCubeInRootCube){
 
-            Cube currentCube = graph.at(i) ;
+            Cube currentCube = graph[i] ;
              QQueue<QVector3D> cubeVertices = currentCube.getVertices() ;
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
-                QVector3D currentNormal =  tmpCube.Normales[v%numVerticePerCube] ;
+                QVector3D currentNormal =  currentCube.Normales[v%numVerticePerCube] ;
 
                 vertices[v][0] =currentVertice.x();
                 vertices[v][1] =currentVertice.y();
@@ -232,7 +229,7 @@ void Viewer::initGeometryCube()
 
     for (int i=0; i<numIndices; ++i)
     {
-        indices[i] = tmpCube.indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
+        indices[i] = Cube().indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
 
         //qInfo() << "indec " << i ;
         //qInfo() << QString::number(indices[i]);
@@ -260,8 +257,8 @@ void Viewer::initGeometryCube()
     // Fill in indices EBO
     // Note: The current VAO will remember the call to glBindBuffer for a GL_ELEMENT_ARRAY_BUFFER.
     // However, we will need to call glDrawElements() instead of glDrawArrays().
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // Create VAO for cubes during picking (with constant shader)
     glBindVertexArray(m_VAOs[VAO_CubesPicking]);
@@ -280,8 +277,8 @@ void Viewer::initScene()
         for (int j=0; j < numCubesPerCol; ++j)
         {
             Cube currentCube = Cube();
-            QMatrix4x4 cubeTranformation;
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
+            QMatrix4x4 cubeTranformation ;
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret));
             currentCube.addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
@@ -336,22 +333,22 @@ void Viewer::performSelection(int x, int y)
 
     const float dimArret = Cube::dimArret;
 
-    // Draw the cubes
-    glBindVertexArray(m_VAOs[VAO_CubesPicking]);
-    m_programPicking->setUniformValue(m_projMatrixLocationPicking, projectionMatrix);
-    QColor color;
-    for (int i=0; i < numCubesPerRow; ++i)
-    {
-        for (int j=0; j < numCubesPerCol; ++j)
+        // Draw the cubes
+        m_programPicking->setUniformValue(m_projMatrixLocationPicking, projectionMatrix);
+        QColor color;
+
+        for (int i=0; i < numCubesPerRow; ++i)
         {
-            // Save transformations
-            QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
+            for (int j=0; j < numCubesPerCol; ++j)
+            {
+                // Save transformations
+                QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
 
-            // Translate cube (hypothese : need getT of cube)
-            modelViewMatrix.translate(QVector3D(i*dimArret, 0, j*dimArret));
-
-            for ( int n = 0 ; n < 6;n++) {
+                // Translate cube
+                modelViewMatrix.translate(QVector3D(i*dimArret, 0, j*dimArret));
+                 m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix);
                 // For convenience, convert the ID to a color object.
+             for (int n = 0 ;n<6;n++) {
                 color.setRgba(id);
                 // Get the equivalent of the color as an unsigned long.
                 unsigned int key = color.rgba();
@@ -361,16 +358,21 @@ void Viewer::performSelection(int x, int y)
                 m_programPicking->setUniformValue(m_colorLocationPicking, color);
 
                 // Draw the cubes
-                m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix);
-                //glDrawArrays(GL_TRIANGLES,n*6,n*6+6);
-                glDrawArrays(GL_TRIANGLES,n*6,6);
+
+               // glDrawArrays(GL_TRIANGLE_STRIP, 0, numVerticePerCube);
+                glBindVertexArray(m_VAOs[VAO_Cube]);
+
+                //glDrawRangeElements(GL_TRIANGLES,0,6,6,GL_UNSIGNED_INT,nullptr);
+                //glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+                glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
+
                 // Restore previous transformations
                 modelViewMatrix = originalModelViewMatrix;
                 // Increment the ID, as it is not in use.
                 id++;
+                }
             }
         }
-    }
     // Wait until all drawing commands are done
     glFinish();
 
