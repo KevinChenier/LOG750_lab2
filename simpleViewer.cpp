@@ -271,6 +271,22 @@ void Viewer::initGeometryCube()
 
 void Viewer::initScene()
 {
+    /*
+    const float dimArret = Cube::dimArret;
+    for (int i=0; i < numCubesPerRow; ++i)
+    {
+        for (int j=0; j < numCubesPerCol; ++j)
+        {
+            Cube currentCube = Cube();
+            QMatrix4x4 cubeTranformation;
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
+            currentCube.addTransformation(cubeTranformation);
+            rootCube.addChild(currentCube);
+        }
+    }
+
+*/
+
     const float dimArret = Cube::dimArret;
     for (int i=0; i < numCubesPerRow; ++i)
     {
@@ -278,7 +294,7 @@ void Viewer::initScene()
         {
             Cube currentCube = Cube();
             QMatrix4x4 cubeTranformation ;
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret));
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
             currentCube.addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
