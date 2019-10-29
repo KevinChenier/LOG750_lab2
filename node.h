@@ -24,7 +24,8 @@ public:
         stackTransformation.append(tmpTransformation);
         int size = nodes.length();
         for (int var = 0; var < size; ++var) {
-            nodes.at(var)->addTransformation(tmpTransformation);
+            QMatrix4x4 t(tmpTransformation);
+            nodes.at(var)->addTransformation(t);
         }
 
     }

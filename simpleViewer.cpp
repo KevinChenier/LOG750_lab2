@@ -17,8 +17,8 @@ namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     const int numVerticePerCube = 24;
-    const int numCubesPerRow = 10;
-    const int numCubesPerCol = 10;
+    const int numCubesPerRow = 1;
+    const int numCubesPerCol = 1;
     int numCubes = numCubesPerRow * numCubesPerCol;
     const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;
@@ -68,9 +68,10 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
 
-   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+
 }
 
 void Viewer::init()
@@ -175,32 +176,12 @@ void Viewer::initGeometryCube()
     // Generate surrounding vertices
     int v = 0;
 
-    //IMPORTANT: rootCube is not the first cube.
-    //IMPORTANT: TODO getAllVertices(numVertices) on rootCube shoulbe return
-    // numVertices include vertices of child (see pattern vistor)
-    // Don't forget to update numCubes after adding a cube when the application is up
+   QQueue<Cube> queueCube = graph; // TODO need call BFS
+   int sizeQueue = queueCube.length();
 
-
-    /*
-    // TODO: write recursive method with pattern visitor to get getAllVertices(numVertices)
-    while (!vertices.isEmpty()){
-        QVector3D currentVertice = vertices.dequeue();
-        vertices[v][0] =currentVertice.x();
-        vertices[v][1] =currentVertice.y();
-        vertices[v][2] =currentVertice.z();
-        QVector3D currentVerticeN = currentVertice.normalized();
-        normals[v][0] =currentVerticeN.x();
-        normals[v][1] =currentVerticeN.y();
-        normals[v][2] =currentVerticeN.z();
-        v++;
-    }
-    */
-
-    // With good conception this line will be deleted
-    int numCubeInRootCube = graph.length();
-    for (int i=0; i<numCubes; ++i)
+   for (int i=0; i<numCubes; ++i)
     {
-        if (v<numVertices && i< numCubeInRootCube){
+        if (v<numVertices && i< sizeQueue){
 
             Cube currentCube = graph[i] ;
              QQueue<QVector3D> cubeVertices = currentCube.getVertices() ;
@@ -271,22 +252,6 @@ void Viewer::initGeometryCube()
 
 void Viewer::initScene()
 {
-    /*
-    const float dimArret = Cube::dimArret;
-    for (int i=0; i < numCubesPerRow; ++i)
-    {
-        for (int j=0; j < numCubesPerCol; ++j)
-        {
-            Cube currentCube = Cube();
-            QMatrix4x4 cubeTranformation;
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
-            currentCube.addTransformation(cubeTranformation);
-            rootCube.addChild(currentCube);
-        }
-    }
-
-*/
-
     const float dimArret = Cube::dimArret;
     for (int i=0; i < numCubesPerRow; ++i)
     {
@@ -294,7 +259,9 @@ void Viewer::initScene()
         {
             Cube currentCube = Cube();
             QMatrix4x4 cubeTranformation ;
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret));
+            // cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
+            // add QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2 fuck the picking
             currentCube.addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
@@ -343,54 +310,57 @@ void Viewer::performSelection(int x, int y)
 
     // Get projection and camera transformations
     QMatrix4x4 projectionMatrix;
-    QMatrix4x4 modelViewMatrix;
+
     camera()->getProjectionMatrix(projectionMatrix);
-    camera()->getModelViewMatrix(modelViewMatrix);
 
-    const float dimArret = Cube::dimArret;
 
-        // Draw the cubes
-        m_programPicking->setUniformValue(m_projMatrixLocationPicking, projectionMatrix);
-        QColor color;
+const float dimArret = Cube::dimArret;
 
-        for (int i=0; i < numCubesPerRow; ++i)
-        {
-            for (int j=0; j < numCubesPerCol; ++j)
-            {
-                // Save transformations
-                QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
+    // Draw the cubes
+    m_programPicking->setUniformValue(m_projMatrixLocationPicking, projectionMatrix);
+    QColor color;
 
-                // Translate cube
-                modelViewMatrix.translate(QVector3D(i*dimArret, 0, j*dimArret));
-                 m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix);
-                // For convenience, convert the ID to a color object.
-             for (int n = 0 ;n<6;n++) {
-                color.setRgba(id);
-                // Get the equivalent of the color as an unsigned long.
-                unsigned int key = color.rgba();
-                // Insert the key (unsigned long) in the map.
-                myMap.insert(key, id);
-                // Set the color value for the shader.
-                m_programPicking->setUniformValue(m_colorLocationPicking, color);
+     QQueue<Cube> queueCube = graph; // TODO need call BFS
+    int sizeQueue = queueCube.length();
+    for (int k=0; k < sizeQueue; ++k)
+                {
+            // Save transformations
+           // QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
+            QMatrix4x4 modelViewMatrix;
+            camera()->getModelViewMatrix(modelViewMatrix);
+            QMatrix4x4 currentCubeTranformation;
+            currentCubeTranformation = queueCube[k].getTransformation();
 
-                // Draw the cubes
 
-               // glDrawArrays(GL_TRIANGLE_STRIP, 0, numVerticePerCube);
-                glBindVertexArray(m_VAOs[VAO_Cube]);
+            // Translate cube
+             m_programPicking->setUniformValue(m_mvMatrixLocationPicking, currentCubeTranformation*modelViewMatrix);
+            // For convenience, convert the ID to a color object.
+         for (int n = 0 ;n<6;n++) {
+            color.setRgba(id);
+            // Get the equivalent of the color as an unsigned long.
+            unsigned int key = color.rgba();
+            // Insert the key (unsigned long) in the map.
+            myMap.insert(key, id);
+            // Set the color value for the shader.
+            m_programPicking->setUniformValue(m_colorLocationPicking, color);
 
-                //glDrawRangeElements(GL_TRIANGLES,0,6,6,GL_UNSIGNED_INT,nullptr);
-                //glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
-                glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
+            // Draw the cubes
 
-                // Restore previous transformations
-                modelViewMatrix = originalModelViewMatrix;
-                // Increment the ID, as it is not in use.
-                id++;
-                }
+           // glDrawArrays(GL_TRIANGLE_STRIP, 0, numVerticePerCube);
+            glBindVertexArray(m_VAOs[VAO_Cube]);
+
+            //glDrawRangeElements(GL_TRIANGLES,0,6,6,GL_UNSIGNED_INT,nullptr);
+            //glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+            glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
+
+            // Restore previous transformations
+           // modelViewMatrix = originalModelViewMatrix;
+            // Increment the ID, as it is not in use.
+            id++;
             }
-        }
+    }
     // Wait until all drawing commands are done
-    glFinish();
+   glFinish();
 
     // Read the pixel under the cursor
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

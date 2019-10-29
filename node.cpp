@@ -12,8 +12,9 @@ QMatrix4x4 Node::getTransformation()
     QMatrix4x4 transformation;
     transformation.setToIdentity();
 
-    while (!stackTransformation.isEmpty()) {
-        transformation*=stackTransformation.pop();
+    int size = stackTransformation.length();
+    for (int var = 0; var < size; ++var) {
+         transformation*=stackTransformation[var];
     }
     return transformation;
 }
