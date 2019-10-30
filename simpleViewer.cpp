@@ -17,7 +17,7 @@ namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     const int numVerticePerCube = 24;
-    const int numCubesPerRow = 1;
+    const int numCubesPerRow = 2;
     const int numCubesPerCol = 1;
     int numCubes = numCubesPerRow * numCubesPerCol;
     const int numIndicePerCube = 36;
@@ -67,7 +67,7 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_projMatrixLocation, projectionMatrix);
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
-
+    //performSelection(0,0);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
@@ -183,7 +183,7 @@ void Viewer::initGeometryCube()
     {
         if (v<numVertices && i< sizeQueue){
 
-            Cube currentCube = graph[i] ;
+            Cube currentCube = queueCube[i] ;
              QQueue<QVector3D> cubeVertices = currentCube.getVertices() ;
 
             while (!cubeVertices.isEmpty()) {
@@ -261,7 +261,8 @@ void Viewer::initScene()
             QMatrix4x4 cubeTranformation ;
             cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret));
             // cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
-            // add QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2 fuck the picking
+            // add + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2 fuck the picking
+            // it should be an multiplication
             currentCube.addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
@@ -290,7 +291,7 @@ void Viewer::performSelection(int x, int y)
     makeCurrent();	// This allows us to use OpenGL functions outside of Viewer::draw()
 
     std::cout << "Viewer::performSelection(" << x << ", " << y << ")" << std::endl;
-
+glEnable(GL_DEPTH_TEST);
     // Selection is performed by drawing the spirals with a color that matches their ID
     // Note: Because we are drawing outside the draw() function, the back buffer is not
     //       swapped after this function is called.
@@ -301,6 +302,7 @@ void Viewer::performSelection(int x, int y)
     glGetFloatv(GL_COLOR_CLEAR_VALUE, clearColor);
 
     glClearColor(1,1,1,1);	// This value should not match any existing index
+    glClearDepth(1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
@@ -333,7 +335,7 @@ const float dimArret = Cube::dimArret;
 
 
             // Translate cube
-             m_programPicking->setUniformValue(m_mvMatrixLocationPicking, currentCubeTranformation*modelViewMatrix);
+             m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix*currentCubeTranformation);
             // For convenience, convert the ID to a color object.
          for (int n = 0 ;n<6;n++) {
             color.setRgba(id);
