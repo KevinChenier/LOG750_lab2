@@ -84,18 +84,24 @@ void Viewer::draw()
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
 
-        bool drawSelected = k == m_selectedCube ? true : false;
-        m_programRender->setUniformValue(m_drawingSelected, drawSelected);
+        bool drawSelectedCube = k == m_selectedCube;
+        m_programRender->setUniformValue(m_drawingSelectedCube, drawSelectedCube);
 
         for (int n=0; n<6; n++)
         {
+            bool drawSelectedFace = m_selectedFace%6 == n;
+
+            m_programRender->setUniformValue(m_drawingSelectedFace, drawSelectedCube && drawSelectedFace);
+
             // Draw the face with the color of selection
             glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
+            // Reset draw selected face option
+            m_programRender->setUniformValue(m_drawingSelectedFace, false);
         }
         // Restore previous transformations
         modelViewMatrix = originalModelViewMatrix;
-        // Reset draw selected option
-        m_programRender->setUniformValue(m_drawingSelected, false);
+        // Reset draw selected cube option
+        m_programRender->setUniformValue(m_drawingSelectedCube, false);
     }
 }
 
@@ -157,6 +163,12 @@ void Viewer::initRenderShaders()
 
     if ((m_normalMatrixLocation = m_programRender->uniformLocation("normalMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "normalMatrix";
+
+    if ((m_drawingSelectedCube = m_programRender->uniformLocation("drawingSelectedCube")) < 0)
+        qDebug() << "Unable to find shader location for " << "drawingSelectedCube";
+
+    if ((m_drawingSelectedFace = m_programRender->uniformLocation("drawingSelectedFace")) < 0)
+        qDebug() << "Unable to find shader location for " << "drawingSelectedFace";
 }
 
 void Viewer::initPickingShaders()

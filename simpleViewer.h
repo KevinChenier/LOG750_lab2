@@ -66,7 +66,8 @@ private:
     // Render shaders & locations
     QOpenGLShaderProgram *m_programRender;
     int m_vPositionLocation;
-    bool m_drawingSelected;
+    int m_drawingSelectedCube;
+    int m_drawingSelectedFace;
     int m_vNormalLocation;
     int m_projMatrixLocation;
     int m_mvMatrixLocation;
