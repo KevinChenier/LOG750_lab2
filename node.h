@@ -12,7 +12,7 @@ public:
     explicit Node();
 
     // Getters
-    virtual QQueue<QVector3D> getVertices(){};
+    virtual QQueue<QVector3D> getVertices() {}
     QMatrix4x4 getTransformation();
     QStack<QMatrix4x4> getStackTransformation() { return stackTransformation; }
     QQueue<Node *> getNodes() { return nodes; }

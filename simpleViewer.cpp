@@ -17,8 +17,8 @@ namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     const int numVerticePerCube = 24;
-    const int numCubesPerRow = 2;
-    const int numCubesPerCol = 1;
+    const int numCubesPerRow = 10;
+    const int numCubesPerCol = 10;
     int numCubes = numCubesPerRow * numCubesPerCol;
     const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;
@@ -67,11 +67,10 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_projMatrixLocation, projectionMatrix);
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
-    //performSelection(0,0);
+
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
-
 }
 
 void Viewer::init()
@@ -184,7 +183,7 @@ void Viewer::initGeometryCube()
         if (v<numVertices && i< sizeQueue){
 
             Cube currentCube = queueCube[i] ;
-             QQueue<QVector3D> cubeVertices = currentCube.getVertices() ;
+            QQueue<QVector3D> cubeVertices = currentCube.getVertices() ;
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
@@ -258,11 +257,9 @@ void Viewer::initScene()
         for (int j=0; j < numCubesPerCol; ++j)
         {
             Cube currentCube = Cube();
-            QMatrix4x4 cubeTranformation ;
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret));
-            // cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
-            // add + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2 fuck the picking
-            // it should be an multiplication
+            QMatrix4x4 cubeTranformation;
+            // Center the scene with QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
             currentCube.addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
@@ -291,7 +288,7 @@ void Viewer::performSelection(int x, int y)
     makeCurrent();	// This allows us to use OpenGL functions outside of Viewer::draw()
 
     std::cout << "Viewer::performSelection(" << x << ", " << y << ")" << std::endl;
-glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
     // Selection is performed by drawing the spirals with a color that matches their ID
     // Note: Because we are drawing outside the draw() function, the back buffer is not
     //       swapped after this function is called.
@@ -312,32 +309,32 @@ glEnable(GL_DEPTH_TEST);
 
     // Get projection and camera transformations
     QMatrix4x4 projectionMatrix;
-
+    QMatrix4x4 modelViewMatrix;
     camera()->getProjectionMatrix(projectionMatrix);
-
-
-const float dimArret = Cube::dimArret;
+    camera()->getModelViewMatrix(modelViewMatrix);
 
     // Draw the cubes
     m_programPicking->setUniformValue(m_projMatrixLocationPicking, projectionMatrix);
-    QColor color;
 
-     QQueue<Cube> queueCube = graph; // TODO need call BFS
-    int sizeQueue = queueCube.length();
-    for (int k=0; k < sizeQueue; ++k)
-                {
-            // Save transformations
-           // QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
-            QMatrix4x4 modelViewMatrix;
-            camera()->getModelViewMatrix(modelViewMatrix);
-            QMatrix4x4 currentCubeTranformation;
-            currentCubeTranformation = queueCube[k].getTransformation();
+    int numCubes = graph.length();
 
+    for (int k=0; k<numCubes; ++k)
+    {
+        // Save transformations
+        QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
+        QMatrix4x4 currentCubeTranformation = graph[k].getTransformation();
 
-            // Translate cube
-             m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix*currentCubeTranformation);
-            // For convenience, convert the ID to a color object.
-         for (int n = 0 ;n<6;n++) {
+        const float dimArret = Cube::dimArret;
+
+        // Translate cube to center first
+        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
+        // Translate to current cube transformation
+        m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix*currentCubeTranformation);
+
+        // For convenience, convert the ID to a color obj-ect.
+        for (int n=0; n<6; n++)
+        {
+            QColor color;
             color.setRgba(id);
             // Get the equivalent of the color as an unsigned long.
             unsigned int key = color.rgba();
@@ -346,23 +343,17 @@ const float dimArret = Cube::dimArret;
             // Set the color value for the shader.
             m_programPicking->setUniformValue(m_colorLocationPicking, color);
 
-            // Draw the cubes
-
-           // glDrawArrays(GL_TRIANGLE_STRIP, 0, numVerticePerCube);
-            glBindVertexArray(m_VAOs[VAO_Cube]);
-
-            //glDrawRangeElements(GL_TRIANGLES,0,6,6,GL_UNSIGNED_INT,nullptr);
-            //glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+            // Draw the face
             glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
 
             // Restore previous transformations
-           // modelViewMatrix = originalModelViewMatrix;
+            modelViewMatrix = originalModelViewMatrix;
             // Increment the ID, as it is not in use.
             id++;
-            }
+        }
     }
     // Wait until all drawing commands are done
-   glFinish();
+    glFinish();
 
     // Read the pixel under the cursor
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
