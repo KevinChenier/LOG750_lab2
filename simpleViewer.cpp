@@ -25,7 +25,7 @@ namespace
     int numIndices = numCubes * numIndicePerCube;
 
     // rootCube is not the first cube.
-     QQueue<Cube> graph;
+    QQueue<Cube*> graph;
 }
 
 Viewer::Viewer()
@@ -77,7 +77,7 @@ void Viewer::draw()
     for (int k=0; k<numCubes; ++k)
     {
         QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
-        QMatrix4x4 currentCubeTranformation = graph[k].getTransformation();
+        QMatrix4x4 currentCubeTranformation = graph[k]->getTransformation();
 
         // Translate cube to center first
         modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
@@ -213,27 +213,27 @@ void Viewer::initGeometryCube()
     // Generate surrounding vertices
     int v = 0;
 
-   QQueue<Cube> queueCube = graph; // TODO need call BFS
+   QQueue<Cube*> queueCube = graph; // TODO need call BFS
    int sizeQueue = queueCube.length();
 
    for (int i=0; i<numCubes; ++i)
     {
         if (v<numVertices && i< sizeQueue){
 
-            Cube currentCube = queueCube[i] ;
-            QQueue<QVector3D> cubeVertices = currentCube.getVertices() ;
+            Cube* currentCube = queueCube[i] ;
+            QQueue<QVector3D> cubeVertices = currentCube->getVertices() ;
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
-                QVector3D currentNormal =  currentCube.Normales[v%numVerticePerCube] ;
+                QVector3D currentNormal =  currentCube->Normales[v%numVerticePerCube] ;
 
                 vertices[v][0] =currentVertice.x();
                 vertices[v][1] =currentVertice.y();
                 vertices[v][2] =currentVertice.z();
 
                 normals[v][0] = currentNormal.x();
-                normals[v][1] =currentNormal.y();
-                normals[v][2] =currentNormal.z();
+                normals[v][1] = currentNormal.y();
+                normals[v][2] = currentNormal.z();
 
                 //qInfo() << "vertices" << v;
                 //qInfo() << QString::number(vertices[v][0]);
@@ -291,14 +291,30 @@ void Viewer::initScene()
     {
         for (int j=0; j < numCubesPerCol; ++j)
         {
-            Cube currentCube = Cube();
+            Cube* currentCube = new Cube();
             QMatrix4x4 cubeTranformation;
             // Center the scene with QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2
             cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
-            currentCube.addTransformation(cubeTranformation);
+            currentCube->addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
     }
+}
+
+void Viewer::addCube()
+{
+    if(m_selectedCube == -1) return;
+
+    Cube* newCube = new Cube();
+    QMatrix4x4 newCubeTranformation;
+    Cube* currentCubeSelected = graph[m_selectedCube];
+
+    newCubeTranformation.translate(Cube::getNormal(m_selectedFace) * Cube::dimArret);
+
+    currentCubeSelected->addChild(newCube);
+
+    newCube->addTransformation(newCubeTranformation * currentCubeSelected->getTransformation());
+    graph.append(newCube);
 }
 
 void Viewer::mousePressEvent(QMouseEvent *e)
@@ -308,7 +324,7 @@ void Viewer::mousePressEvent(QMouseEvent *e)
 
     if ((e->button() == Qt::LeftButton) && (e->modifiers() == Qt::ShiftModifier))
     {
-        // addCube()
+        addCube();
         update();
     }
 }
@@ -365,7 +381,7 @@ void Viewer::performSelection(int x, int y)
     {
         // Save transformations
         QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
-        QMatrix4x4 currentCubeTranformation = graph[k].getTransformation();
+        QMatrix4x4 currentCubeTranformation = graph[k]->getTransformation();
 
         const float dimArret = Cube::dimArret;
 

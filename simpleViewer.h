@@ -56,6 +56,8 @@ private:
 
     void performSelection(int x, int y);
 
+    void addCube();
+
     // VAOs and VBOs
     enum VAO_IDs { VAO_Cube, NumVAOs };
     enum Buffer_IDs { VBO_Cube, EBO_Cube, NumBuffers };

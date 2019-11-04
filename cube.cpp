@@ -50,3 +50,16 @@ QQueue<QVector3D> Cube::getVertices()
 
     return vertices;
 }
+
+const QVector3D Cube::getNormal(int faceID)
+{
+    switch(faceID%6)
+    {
+        case 0: return frontN;
+        case 1: return rightN;
+        case 2: return backN;
+        case 3: return leftN;
+        case 4: return upperN;
+        case 5: return bottomN;
+    }
+}
