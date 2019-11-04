@@ -29,7 +29,7 @@ namespace
 }
 
 Viewer::Viewer()
-    : m_selectedCube(-1)
+    : m_selectedFace(-1)
 {
 }
 
@@ -70,7 +70,33 @@ void Viewer::draw()
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
-    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+
+    int numCubes = graph.length();
+    const float dimArret = Cube::dimArret;
+
+    for (int k=0; k<numCubes; ++k)
+    {
+        QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
+        QMatrix4x4 currentCubeTranformation = graph[k].getTransformation();
+
+        // Translate cube to center first
+        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
+        // Translate to current cube transformation
+        m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
+
+        bool drawSelected = k == m_selectedCube ? true : false;
+        m_programRender->setUniformValue(m_drawingSelected, drawSelected);
+
+        for (int n=0; n<6; n++)
+        {
+            // Draw the face with the color of selection
+            glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
+        }
+        // Restore previous transformations
+        modelViewMatrix = originalModelViewMatrix;
+        // Reset draw selected option
+        m_programRender->setUniformValue(m_drawingSelected, false);
+    }
 }
 
 void Viewer::init()
@@ -240,9 +266,6 @@ void Viewer::initGeometryCube()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    // Create VAO for cubes during picking (with constant shader)
-    glBindVertexArray(m_VAOs[VAO_CubesPicking]);
-
     glVertexAttribPointer(GLuint(m_vPositionLocationPicking), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
     glEnableVertexAttribArray(GLuint(m_vPositionLocationPicking));
 
@@ -273,14 +296,21 @@ void Viewer::mousePressEvent(QMouseEvent *e)
 
     if ((e->button() == Qt::LeftButton) && (e->modifiers() == Qt::ShiftModifier))
     {
-        performSelection(e->x(), e->y());
+        // addCube()
         update();
     }
 }
 
+void Viewer::mouseMoveEvent(QMouseEvent *e)
+{
+    QGLViewer::mouseMoveEvent(e);
+    performSelection(e->x(), e->y());
+    update();
+}
+
 void Viewer::performSelection(int x, int y)
 {
-    // Map (dictionnary) used to store the correspondences between colors and spiral number.
+    // Map (dictionnary) used to store the correspondences between colors and faces.
     QMap<unsigned int, int> myMap;
     // Identificator ID used as a color for rendering and as a key for the map.
     QRgb id = 0;
@@ -288,12 +318,13 @@ void Viewer::performSelection(int x, int y)
     makeCurrent();	// This allows us to use OpenGL functions outside of Viewer::draw()
 
     std::cout << "Viewer::performSelection(" << x << ", " << y << ")" << std::endl;
+
     glEnable(GL_DEPTH_TEST);
-    // Selection is performed by drawing the spirals with a color that matches their ID
+    // Selection is performed by drawing the cube faces with a color that matches their ID
     // Note: Because we are drawing outside the draw() function, the back buffer is not
     //       swapped after this function is called.
 
-    // Clear back buffer. Since we set a differet clear color, we save the
+    // Clear back buffer. Since we set a different clear color, we save the
     // previous value and restore it after the backbuffer has been cleared.
     float clearColor[4];
     glGetFloatv(GL_COLOR_CLEAR_VALUE, clearColor);
@@ -346,11 +377,11 @@ void Viewer::performSelection(int x, int y)
             // Draw the face
             glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
 
-            // Restore previous transformations
-            modelViewMatrix = originalModelViewMatrix;
             // Increment the ID, as it is not in use.
             id++;
         }
+        // Restore previous transformations
+        modelViewMatrix = originalModelViewMatrix;
     }
     // Wait until all drawing commands are done
     glFinish();
@@ -371,7 +402,11 @@ void Viewer::performSelection(int x, int y)
     unsigned int key = pickedColor.rgba();
     // Get the value matching the key.
     int value = myMap.value(key, -1);
-    m_selectedCube = value;
+
+    m_selectedFace = value;
+    std::cout << "m_selectedFace: " << m_selectedFace << std::endl;
+
+    m_selectedCube = floor(value/6.f);
     std::cout << "m_selectedCube: " << m_selectedCube << std::endl;
 
     // We are done with OpenGL

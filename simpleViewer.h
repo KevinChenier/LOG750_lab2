@@ -46,6 +46,7 @@ protected :
     virtual void init();
 
     virtual void mousePressEvent(QMouseEvent* e);
+    virtual void mouseMoveEvent(QMouseEvent* e);
 
 private:
     void initRenderShaders();
@@ -55,12 +56,8 @@ private:
 
     void performSelection(int x, int y);
 
-    void updateSelectRay(const qglviewer::Vec&	point,
-                                           const qglviewer::Vec&	rayOrig,
-                                           const qglviewer::Vec&	rayDir);
-
     // VAOs and VBOs
-    enum VAO_IDs { VAO_Cube, VAO_CubesPicking, NumVAOs };
+    enum VAO_IDs { VAO_Cube, NumVAOs };
     enum Buffer_IDs { VBO_Cube, EBO_Cube, NumBuffers };
 
     GLuint m_VAOs[NumVAOs];
@@ -69,6 +66,7 @@ private:
     // Render shaders & locations
     QOpenGLShaderProgram *m_programRender;
     int m_vPositionLocation;
+    bool m_drawingSelected;
     int m_vNormalLocation;
     int m_projMatrixLocation;
     int m_mvMatrixLocation;
@@ -82,6 +80,7 @@ private:
     int m_mvMatrixLocationPicking;
 
     // Picking
+    int m_selectedFace;
     int m_selectedCube;
 };
 
