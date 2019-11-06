@@ -34,36 +34,74 @@ QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 class Viewer : public QGLViewer, protected QOpenGLFunctions_4_0_Core
 {
+    Q_OBJECT
 public:
     Viewer();
     ~Viewer();
 
 public slots:
     void cleanup();
+public slots:
+    // rotate X
+    void plusX(bool b);
+    void negativeX(bool b);
+    // rotate Y
+    void plusY(bool b);
+    void negativeY(bool b);
+    // rotate Z
+    void plusZ(bool b);
+    void negativeZ(bool b);
 
 protected :
-  virtual void draw();
-  virtual void init();
+    virtual void draw();
+    virtual void init();
+
+    virtual void mousePressEvent(QMouseEvent* e);
+    virtual void mouseMoveEvent(QMouseEvent* e);
 
 private:
-	void initRenderShaders();
-  void initGeometrySphere();
+    void initRenderShaders();
+    void initPickingShaders();
+    void initGeometryCube();
+    void initScene();
 
-	// VAOs and VBOs
-  enum VAO_IDs { VAO_Sphere, NumVAOs };
-  enum Buffer_IDs { VBO_Sphere, EBO_Sphere, NumBuffers };
+    void performSelection(int x, int y, bool selectCubeOnClick);
 
-	GLuint m_VAOs[NumVAOs];
-	GLuint m_Buffers[NumBuffers];
+    void addCube();
 
-	// Render shaders & locations
-	QOpenGLShaderProgram *m_programRender;
-  int m_vPositionLocation;
-	int m_vNormalLocation;
-  int m_projMatrixLocation;
-  int m_mvMatrixLocation;
-	int	m_normalMatrixLocation;
+    // VAOs and VBOs
+    enum VAO_IDs { VAO_Cube, NumVAOs };
+    enum Buffer_IDs { VBO_Cube, EBO_Cube, NumBuffers };
 
+    GLuint m_VAOs[NumVAOs];
+    GLuint m_Buffers[NumBuffers];
+
+    // Render shaders & locations
+    QOpenGLShaderProgram *m_programRender;
+    int m_vPositionLocation;
+    int m_drawingSelectedCubeOnClick;
+    int m_drawingSelectedFace;
+    int m_vNormalLocation;
+    int m_projMatrixLocation;
+    int m_mvMatrixLocation;
+    int m_normalMatrixLocation;
+
+    // Picking shaders & locations
+    QOpenGLShaderProgram *m_programPicking;
+    int m_vPositionLocationPicking;
+    int m_colorLocationPicking;
+    int m_projMatrixLocationPicking;
+    int m_mvMatrixLocationPicking;
+
+    // Picking
+    int m_selectedFace;
+    int m_selectedCubeOnClick;
+    int selectedCubeOnHover;
+
+    // Cubes
+    int m_cubeAmbiant;
+    int m_cubeSpecular;
+    int m_cubeDiffuse;
 };
 
 #endif // SIMPLEVIEWER_H
