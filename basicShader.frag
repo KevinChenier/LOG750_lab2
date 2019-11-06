@@ -1,4 +1,6 @@
 #version 400 core
+uniform bool drawingSelectedCubeOnClick;
+uniform bool drawingSelectedFace;
 in vec3 fNormal;
 in vec3 fPosition;
 out vec4 fColor;
@@ -18,6 +20,20 @@ main()
     float specular = 0.0;//0.1*pow(max(0.0, dot(Rl, nviewDirection)), 16);
 
     // Compute final color
-    vec3 color = vec3(1);
+    vec3 color;
+
+    if(drawingSelectedFace)
+    {
+        color = vec3(0.0 , 0.0, 1.0);
+    }
+    else if (drawingSelectedCubeOnClick)
+    {
+        color = vec3(1.0, 0.0, 0.0);
+    }
+    else
+    {
+        color = vec3(0.0, 1.0, 0.0);
+    }
+
     fColor = vec4(color * (diffuse +  specular), 1);
 }

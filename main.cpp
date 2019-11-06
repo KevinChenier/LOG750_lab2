@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 
     // Set the core profile and version of OpenGL shaders
     QSurfaceFormat fmt;
-		fmt.setVersion(4, 0);
+        fmt.setVersion(4, 0);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(fmt);
 
