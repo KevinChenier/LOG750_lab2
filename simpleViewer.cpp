@@ -29,7 +29,9 @@ namespace
 }
 
 Viewer::Viewer()
-    : m_selectedFace(-1)
+    : m_selectedFace(-1),
+      selectedCubeOnHover(-1),
+      m_selectedCubeOnClick(-1)
 {
 }
 
@@ -84,14 +86,16 @@ void Viewer::draw()
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
 
-        bool drawSelectedCube = k == m_selectedCube;
-        m_programRender->setUniformValue(m_drawingSelectedCube, drawSelectedCube);
+        bool drawSelectedCubeOnClick = k == m_selectedCubeOnClick;
+        bool drawSelectedCubeOnHover = k == selectedCubeOnHover;
+
+        m_programRender->setUniformValue(m_drawingSelectedCubeOnClick, drawSelectedCubeOnClick);
 
         for (int n=0; n<6; n++)
         {
-            bool drawSelectedFace = m_selectedFace%6 == n;
+            bool drawSelectedFace = m_selectedFace%6 == n && drawSelectedCubeOnHover;
 
-            m_programRender->setUniformValue(m_drawingSelectedFace, drawSelectedCube && drawSelectedFace);
+            m_programRender->setUniformValue(m_drawingSelectedFace, drawSelectedFace);
 
             // Draw the face with the color of selection
             glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
@@ -101,12 +105,13 @@ void Viewer::draw()
         // Restore previous transformations
         modelViewMatrix = originalModelViewMatrix;
         // Reset draw selected cube option
-        m_programRender->setUniformValue(m_drawingSelectedCube, false);
+        m_programRender->setUniformValue(m_drawingSelectedCubeOnClick, false);
     }
 }
 
 void Viewer::init()
 {
+    setMouseTracking(true);
     setMouseBinding(Qt::ShiftModifier, Qt::LeftButton, CAMERA, NO_MOUSE_ACTION);
 
     // Initialize openGL
@@ -164,8 +169,8 @@ void Viewer::initRenderShaders()
     if ((m_normalMatrixLocation = m_programRender->uniformLocation("normalMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "normalMatrix";
 
-    if ((m_drawingSelectedCube = m_programRender->uniformLocation("drawingSelectedCube")) < 0)
-        qDebug() << "Unable to find shader location for " << "drawingSelectedCube";
+    if ((m_drawingSelectedCubeOnClick = m_programRender->uniformLocation("drawingSelectedCubeOnClick")) < 0)
+        qDebug() << "Unable to find shader location for " << "drawingSelectedCubeOnClick";
 
     if ((m_drawingSelectedFace = m_programRender->uniformLocation("drawingSelectedFace")) < 0)
         qDebug() << "Unable to find shader location for " << "drawingSelectedFace";
@@ -303,11 +308,11 @@ void Viewer::initScene()
 
 void Viewer::addCube()
 {
-    if(m_selectedCube == -1) return;
+    if(m_selectedFace == -1) return;
 
     Cube* newCube = new Cube();
     QMatrix4x4 newCubeTranformation;
-    Cube* currentCubeSelected = graph[m_selectedCube];
+    Cube* currentCubeSelected = graph[selectedCubeOnHover];
 
     newCubeTranformation.translate(Cube::getNormal(m_selectedFace) * Cube::dimArret);
 
@@ -322,21 +327,28 @@ void Viewer::mousePressEvent(QMouseEvent *e)
     QGLViewer::mousePressEvent(e);
     std::cout << "Viewer::mousePressEvent" << std::endl;
 
-    if ((e->button() == Qt::LeftButton) && (e->modifiers() == Qt::ShiftModifier))
+    if ((e->button() == Qt::LeftButton))
     {
-        addCube();
-        update();
+        if((e->modifiers() == Qt::ShiftModifier))
+        {
+            addCube();
+            update();
+        }
+        if((e->modifiers() == Qt::CTRL))
+        {
+            performSelection(e->x(), e->y(), true);
+        }
     }
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
     QGLViewer::mouseMoveEvent(e);
-    performSelection(e->x(), e->y());
+    performSelection(e->x(), e->y(), false);
     update();
 }
 
-void Viewer::performSelection(int x, int y)
+void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
 {
     // Map (dictionnary) used to store the correspondences between colors and faces.
     QMap<unsigned int, int> myMap;
@@ -434,8 +446,14 @@ void Viewer::performSelection(int x, int y)
     m_selectedFace = value;
     std::cout << "m_selectedFace: " << m_selectedFace << std::endl;
 
-    m_selectedCube = floor(value/6.f);
-    std::cout << "m_selectedCube: " << m_selectedCube << std::endl;
+    selectedCubeOnHover = floor(value/6.f);
+    std::cout << "m_selectedCubeOnHover: " << selectedCubeOnHover << std::endl;
+
+    if(selectCubeOnClick)
+    {
+        m_selectedCubeOnClick = selectedCubeOnHover;
+        std::cout << "m_selectedCubeOnClick: " << m_selectedCubeOnClick << std::endl;
+    }
 
     // We are done with OpenGL
     doneCurrent();

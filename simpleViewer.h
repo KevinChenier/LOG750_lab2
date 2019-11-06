@@ -54,7 +54,7 @@ private:
     void initGeometryCube();
     void initScene();
 
-    void performSelection(int x, int y);
+    void performSelection(int x, int y, bool selectCubeOnClick);
 
     void addCube();
 
@@ -68,7 +68,7 @@ private:
     // Render shaders & locations
     QOpenGLShaderProgram *m_programRender;
     int m_vPositionLocation;
-    int m_drawingSelectedCube;
+    int m_drawingSelectedCubeOnClick;
     int m_drawingSelectedFace;
     int m_vNormalLocation;
     int m_projMatrixLocation;
@@ -84,7 +84,8 @@ private:
 
     // Picking
     int m_selectedFace;
-    int m_selectedCube;
+    int m_selectedCubeOnClick;
+    int selectedCubeOnHover;
 };
 
 #endif // SIMPLEVIEWER_H
