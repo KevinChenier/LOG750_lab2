@@ -458,3 +458,27 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
     // We are done with OpenGL
     doneCurrent();
 }
+void Viewer::plusX(bool b) {
+    std::cout << " +x " ;
+    update();
+}
+void Viewer::negativeX(bool b) {
+    std::cout << " -x " ;
+    update();
+}
+void Viewer::plusY(bool b) {
+    std::cout << " +y " ;
+    update();
+}
+void Viewer::negativeY(bool b) {
+    std::cout << " -y " ;
+    update();
+}
+void Viewer::plusZ(bool b) {
+    std::cout << " +z " ;
+    update();
+}
+void Viewer::negativeZ(bool b) {
+    std::cout << " -z " ;
+    update();
+}

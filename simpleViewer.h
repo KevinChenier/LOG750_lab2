@@ -34,12 +34,23 @@ QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 class Viewer : public QGLViewer, protected QOpenGLFunctions_4_0_Core
 {
+    Q_OBJECT
 public:
     Viewer();
     ~Viewer();
 
 public slots:
     void cleanup();
+public slots:
+    // rotate X
+    void plusX(bool b);
+    void negativeX(bool b);
+    // rotate Y
+    void plusY(bool b);
+    void negativeY(bool b);
+    // rotate Z
+    void plusZ(bool b);
+    void negativeZ(bool b);
 
 protected :
     virtual void draw();
