@@ -97,6 +97,11 @@ private:
     int m_selectedFace;
     int m_selectedCubeOnClick;
     int selectedCubeOnHover;
+
+    // Cubes
+    int m_cubeAmbiant;
+    int m_cubeSpecular;
+    int m_cubeDiffuse;
 };
 
 #endif // SIMPLEVIEWER_H
