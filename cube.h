@@ -43,8 +43,12 @@ public:
         upperN, upperN, upperN, upperN,  //upper
         bottomN, bottomN, bottomN, bottomN, //bottom
     };
+
     static constexpr float dimArret = 1.0f;
 
+    QVector3D ambiant = QVector3D(0.2f, 0.f, 0.f);
+    float diffuse = 0.1f;
+    float specular = 0.2f;
 };
 
 #endif // CUBE_H

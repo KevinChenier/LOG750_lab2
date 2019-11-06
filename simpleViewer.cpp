@@ -30,7 +30,6 @@ namespace
 
 Viewer::Viewer()
     : m_selectedFace(-1),
-      selectedCubeOnHover(-1),
       m_selectedCubeOnClick(-1)
 {
 }
@@ -78,8 +77,19 @@ void Viewer::draw()
 
     for (int k=0; k<numCubes; ++k)
     {
+        Cube* currentCube = graph[k];
         QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
-        QMatrix4x4 currentCubeTranformation = graph[k]->getTransformation();
+        QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
+
+        // Set different material
+        currentCube->ambiant.setX(k%2);
+        currentCube->ambiant.setY(k%8);
+        currentCube->ambiant.setZ(k%6);
+
+        // Set cube "material" in shader
+        m_programRender->setUniformValue(m_cubeAmbiant, currentCube->ambiant);
+        m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
+        m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
 
         // Translate cube to center first
         modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
@@ -174,6 +184,15 @@ void Viewer::initRenderShaders()
 
     if ((m_drawingSelectedFace = m_programRender->uniformLocation("drawingSelectedFace")) < 0)
         qDebug() << "Unable to find shader location for " << "drawingSelectedFace";
+
+    if ((m_cubeSpecular = m_programRender->uniformLocation("cubeSpecular")) < 0)
+        qDebug() << "Unable to find shader location for " << "cubeSpecular";
+
+    if ((m_cubeAmbiant = m_programRender->uniformLocation("cubeAmbiant")) < 0)
+        qDebug() << "Unable to find shader location for " << "cubeAmbiant";
+
+    if ((m_cubeDiffuse = m_programRender->uniformLocation("cubeDiffuse")) < 0)
+        qDebug() << "Unable to find shader location for " << "cubeDiffuse";
 }
 
 void Viewer::initPickingShaders()
