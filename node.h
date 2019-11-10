@@ -16,20 +16,9 @@ public:
     QMatrix4x4 getTransformation();
     QStack<QMatrix4x4> getStackTransformation() { return stackTransformation; }
     QQueue<Node*> getNodes() { return nodes; }
+
     Node* getChild(int index) { return nodes.at(index); }
-    //int qSize(){ return nodes.length();}
-    bool hasChild(){
-        bool hasChild = false;
-
-        if(nodes.length() == 0){
-            hasChild = false;
-        } else {
-            hasChild = true;
-        }
-
-        return hasChild;
-    }
-
+    bool hasChild(){ return nodes.length() == 0; }
     void addChild(Node* child) { nodes.append(child); }
 
     void addTransformation(QMatrix4x4 tmpTransformation) {

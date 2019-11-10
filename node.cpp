@@ -13,7 +13,7 @@ QMatrix4x4 Node::getTransformation()
     transformation.setToIdentity();
 
     int size = stackTransformation.length();
-    for (int var = 0; var < size; ++var) {
+    for (int var = size - 1; var >= 0; --var) {
          transformation*=stackTransformation[var];
     }
     return transformation;

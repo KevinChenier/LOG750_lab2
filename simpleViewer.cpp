@@ -17,8 +17,8 @@ namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     const int numVerticePerCube = 24;
-    const int numCubesPerRow = 10;
-    const int numCubesPerCol = 10;
+    const int numCubesPerRow = 11;
+    const int numCubesPerCol = 11;
     int numCubes = numCubesPerRow * numCubesPerCol;
     const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;
@@ -82,9 +82,9 @@ void Viewer::draw()
         QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
 
         // Set different material
-        currentCube->ambiant.setX(k);
-        currentCube->ambiant.setY(k);
-        currentCube->ambiant.setZ(k);
+        currentCube->ambiant.setX(k%2);
+        currentCube->ambiant.setY(k%4);
+        currentCube->ambiant.setZ(k%6);
 
         // Set cube "material" in shader
         m_programRender->setUniformValue(m_cubeAmbiant, currentCube->ambiant);
@@ -92,7 +92,7 @@ void Viewer::draw()
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
 
         // Translate cube to center first
-        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
+        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret);
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
 
@@ -318,7 +318,7 @@ void Viewer::initScene()
             Cube* currentCube = new Cube();
             QMatrix4x4 cubeTranformation;
             // Center the scene with QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret);
             currentCube->addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
@@ -417,7 +417,7 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
         const float dimArret = Cube::dimArret;
 
         // Translate cube to center first
-        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
+        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret);
         // Translate to current cube transformation
         m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix*currentCubeTranformation);
 
@@ -478,73 +478,41 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
     doneCurrent();
 }
 
-void Viewer::plusX(Node* child) {
-
-
-    /*
-    QMatrix4x4 newCubeTranformation;
-    Cube* currentCubeSelected = graph[selectedCubeOnHover];
-
-    newCubeTranformation.translate(Cube::getNormal(m_selectedFace) * Cube::dimArret);
-
-    currentCubeSelected->addChild(newCube);
-
-    newCube->addTransformation(newCubeTranformation * currentCubeSelected->getTransformation());
-
-*/
-    QMatrix4x4 newCubeTranformation;
-    QMatrix4x4 original;
-    if(m_selectedCubeOnClick >= 0){
-
-        Node* currentCube = child == nullptr ? graph[m_selectedCubeOnClick] : child;
-
-        //QMatrix4x4 originalTransformation = currentCube->getTransformation();
-
-        if(currentCube->hasChild() && currentCube){
-
-            int size = currentCube->getNodes().length();
-
-            //std::cout << size << std::endl;
-
-            for(int i = 0; i < size; i++){
-                //rotation here
-
-
-                //currentCube->getTransformation().(QVector3D(0,0,0));
-                original = currentCube->getTransformation();
-                newCubeTranformation = currentCube->getTransformation();
-                newCubeTranformation.translate(QVector3D(0,0,0));
-                newCubeTranformation.rotate(90.f, QVector3D(1,0,0));
-                //newCubeTranformation.translate(original);
-                //currentCube->getTransformation();
-
-                //casuce = originalTransformation*newCubeTranformation*origin;
-                currentCube->addTransformation(newCubeTranformation);
-
-                plusX(currentCube->getChild(i));
-
-            }
-        }
-        update();
-    }
+void Viewer::rotateAroundXAxisPositive() {
+    rotateAroundAxis(QVector3D(90.f,0.f,0.f));
 }
-void Viewer::negativeX(bool b) {
-    std::cout << " -x " ;
-    update();
+
+void Viewer::rotateAroundXAxisNegative() {
+    rotateAroundAxis(QVector3D(-90.f,0.f,0.f));
 }
-void Viewer::plusY(bool b) {
-    std::cout << " +y " ;
-    update();
+
+void Viewer::rotateAroundYAxisPositive() {
+    rotateAroundAxis(QVector3D(0.f,90.f,0.f));
 }
-void Viewer::negativeY(bool b) {
-    std::cout << " -y " ;
-    update();
+
+void Viewer::rotateAroundYAxisNegative() {
+    rotateAroundAxis(QVector3D(0.f,-90.f,0.f));
 }
-void Viewer::plusZ(bool b) {
-    std::cout << " +z " ;
-    update();
+
+void Viewer::rotateAroundZAxisPositive() {
+    rotateAroundAxis(QVector3D(0.f,0.f,90.f));
 }
-void Viewer::negativeZ(bool b) {
-    std::cout << " -z " ;
+
+void Viewer::rotateAroundZAxisNegative() {
+    rotateAroundAxis(QVector3D(0.f,0.f,-90.f));
+}
+
+void Viewer::rotateAroundAxis(QVector3D axis) {
+
+    if(m_selectedCubeOnClick < 0) return;
+
+    Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
+    QMatrix4x4 rotM;
+
+    QQuaternion rotQ = QQuaternion::fromEulerAngles(axis);
+    rotM.rotate(rotQ);
+
+    currentCubeSelected->addTransformation(rotM);
+
     update();
 }

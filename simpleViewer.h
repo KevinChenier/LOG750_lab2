@@ -42,15 +42,14 @@ public:
 
 public slots:
     void cleanup();
-    // rotate X
-    void plusX(Node* child = nullptr);
-    void negativeX(bool b);
-    // rotate Y
-    void plusY(bool b);
-    void negativeY(bool b);
-    // rotate Z
-    void plusZ(bool b);
-    void negativeZ(bool b);
+
+    void rotateAroundXAxisPositive();
+    void rotateAroundXAxisNegative();
+    void rotateAroundYAxisPositive();
+    void rotateAroundYAxisNegative();
+    void rotateAroundZAxisPositive();
+    void rotateAroundZAxisNegative();
+    void rotateAroundAxis(QVector3D axis);
 
 protected :
     virtual void draw();
