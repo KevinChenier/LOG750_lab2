@@ -40,11 +40,11 @@ main()
 
     // Add cube "texture"
 
-    if(!drawingSelectedCubeOnClick && !drawingSelectedFace)
+    /*if(!drawingSelectedCubeOnClick && !drawingSelectedFace)
         color += cubeAmbiant;
 
     diffuse += cubeDiffuse;
-    specular += cubeSpecular;
+    specular += cubeSpecular;*/
 
     fColor = vec4(color * (diffuse +  specular), 1);
 }

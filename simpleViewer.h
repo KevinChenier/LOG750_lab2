@@ -29,6 +29,7 @@
 #include <QMatrix4x4>
 #include <QVector3D>
 #include <QGLViewer/qglviewer.h>
+#include <node.h>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
@@ -41,9 +42,8 @@ public:
 
 public slots:
     void cleanup();
-public slots:
     // rotate X
-    void plusX(bool b);
+    void plusX(Node* child = nullptr);
     void negativeX(bool b);
     // rotate Y
     void plusY(bool b);
@@ -62,6 +62,7 @@ protected :
 private:
     void initRenderShaders();
     void initPickingShaders();
+    void initDLightingShaders();
     void initGeometryCube();
     void initScene();
 

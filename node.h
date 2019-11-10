@@ -5,7 +5,7 @@
 #include <QQueue>
 #include <QStack>
 
-class Node
+class Node : public QObject
 {
 public:
     // Constructor
@@ -17,6 +17,18 @@ public:
     QStack<QMatrix4x4> getStackTransformation() { return stackTransformation; }
     QQueue<Node*> getNodes() { return nodes; }
     Node* getChild(int index) { return nodes.at(index); }
+    //int qSize(){ return nodes.length();}
+    bool hasChild(){
+        bool hasChild = false;
+
+        if(nodes.length() == 0){
+            hasChild = false;
+        } else {
+            hasChild = true;
+        }
+
+        return hasChild;
+    }
 
     void addChild(Node* child) { nodes.append(child); }
 
@@ -28,6 +40,7 @@ public:
             nodes.at(var)->addTransformation(t);
         }
     }
+
 
 private:
     QStack<QMatrix4x4> stackTransformation;

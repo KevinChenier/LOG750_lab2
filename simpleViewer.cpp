@@ -82,9 +82,9 @@ void Viewer::draw()
         QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
 
         // Set different material
-        currentCube->ambiant.setX(k%2);
-        currentCube->ambiant.setY(k%8);
-        currentCube->ambiant.setZ(k%6);
+        currentCube->ambiant.setX(k);
+        currentCube->ambiant.setY(k);
+        currentCube->ambiant.setZ(k);
 
         // Set cube "material" in shader
         m_programRender->setUniformValue(m_cubeAmbiant, currentCube->ambiant);
@@ -477,9 +477,56 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
     // We are done with OpenGL
     doneCurrent();
 }
-void Viewer::plusX(bool b) {
-    std::cout << " +x " ;
-    update();
+
+void Viewer::plusX(Node* child) {
+
+
+    /*
+    QMatrix4x4 newCubeTranformation;
+    Cube* currentCubeSelected = graph[selectedCubeOnHover];
+
+    newCubeTranformation.translate(Cube::getNormal(m_selectedFace) * Cube::dimArret);
+
+    currentCubeSelected->addChild(newCube);
+
+    newCube->addTransformation(newCubeTranformation * currentCubeSelected->getTransformation());
+
+*/
+    QMatrix4x4 newCubeTranformation;
+    QMatrix4x4 original;
+    if(m_selectedCubeOnClick >= 0){
+
+        Node* currentCube = child == nullptr ? graph[m_selectedCubeOnClick] : child;
+
+        //QMatrix4x4 originalTransformation = currentCube->getTransformation();
+
+        if(currentCube->hasChild() && currentCube){
+
+            int size = currentCube->getNodes().length();
+
+            //std::cout << size << std::endl;
+
+            for(int i = 0; i < size; i++){
+                //rotation here
+
+
+                //currentCube->getTransformation().(QVector3D(0,0,0));
+                original = currentCube->getTransformation();
+                newCubeTranformation = currentCube->getTransformation();
+                newCubeTranformation.translate(QVector3D(0,0,0));
+                newCubeTranformation.rotate(90.f, QVector3D(1,0,0));
+                //newCubeTranformation.translate(original);
+                //currentCube->getTransformation();
+
+                //casuce = originalTransformation*newCubeTranformation*origin;
+                currentCube->addTransformation(newCubeTranformation);
+
+                plusX(currentCube->getChild(i));
+
+            }
+        }
+        update();
+    }
 }
 void Viewer::negativeX(bool b) {
     std::cout << " -x " ;

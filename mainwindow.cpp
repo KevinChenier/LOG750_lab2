@@ -20,7 +20,7 @@ void MainWindow::addViewer(Viewer* viewer)
     layout->addWidget(viewer);
     ui->frame->setLayout(layout);
     // rotate X
-    QObject::connect(ui->pushButton_2, SIGNAL(clicked(bool)),viewer, SLOT(plusX(bool)));
+    QObject::connect(ui->pushButton_2, SIGNAL(clicked(bool)),viewer, SLOT(plusX()));
     QObject::connect(ui->pushButton, SIGNAL(clicked(bool)),viewer, SLOT(negativeX(bool)));
     // rotate Y
     QObject::connect(ui->pushButton_4, SIGNAL(clicked(bool)),viewer, SLOT(plusY(bool)));
