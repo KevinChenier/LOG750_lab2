@@ -73,7 +73,6 @@ void Viewer::draw()
     glBindVertexArray(m_VAOs[VAO_Cube]);
 
     int numCubes = graph.length();
-    const float dimArret = Cube::dimArret;
 
     for (int k=0; k<numCubes; ++k)
     {
@@ -91,8 +90,6 @@ void Viewer::draw()
         m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
 
-        // Translate cube to center first
-        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
 
@@ -317,8 +314,8 @@ void Viewer::initScene()
         {
             Cube* currentCube = new Cube();
             QMatrix4x4 cubeTranformation;
-            // Center the scene with QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
+            // Center the scene with QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) - QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
             currentCube->addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
@@ -418,8 +415,6 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
 
         const float dimArret = Cube::dimArret;
 
-        // Translate cube to center first
-        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
         // Translate to current cube transformation
         m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix*currentCubeTranformation);
 
@@ -506,9 +501,13 @@ void Viewer::rotateAroundZAxisNegative() {
 
 void Viewer::rotateAroundAxis(QVector3D axis) {
 
-    if(animationIsStarted()) return;
+    if(animationIsStarted() || m_selectedCubeOnClick < 0) return;
+
+    Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
 
     animationAxis = axis;
+    backToPlanOriginM = currentCubeSelected->getTransformation().inverted();
+    backToCubeOriginM = currentCubeSelected->getTransformation();
     startAnimation();
 }
 
@@ -517,14 +516,14 @@ void Viewer::animate() {
     if(m_selectedCubeOnClick < 0) return;
 
     QMatrix4x4 rotM;
-    rotM.rotate(1.f, animationAxis);
+    rotM.rotate(animationIterationAngle, animationAxis);
 
-    animationCurrentAngle++;
+    animationCurrentAngle+=animationIterationAngle;
 
     Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
-    currentCubeSelected->addTransformation(rotM);
+    currentCubeSelected->addTransformation(backToCubeOriginM * rotM * backToPlanOriginM);
 
-    if(animationCurrentAngle == 90.f)
+    if(animationCurrentAngle >= animationMaxAngle)
     {
         stopAnimation();
         animationCurrentAngle = 0;

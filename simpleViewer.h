@@ -106,6 +106,11 @@ private:
 
     QVector3D animationAxis;
     float animationCurrentAngle;
+    QMatrix4x4 backToPlanOriginM;
+    QMatrix4x4 backToCubeOriginM;
+
+    static constexpr float animationMaxAngle = 90.f;
+    static constexpr float animationIterationAngle = animationMaxAngle/3.f;
 };
 
 #endif // SIMPLEVIEWER_H
