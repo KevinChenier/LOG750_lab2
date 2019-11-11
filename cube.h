@@ -14,7 +14,7 @@ public:
 
     // Getters
     QQueue<QVector3D> getVertices() override ;
-    static const QVector3D getNormal(int faceID);
+    const QVector3D getNormal(int faceID);
 
     // source : https://github.com/in2gpu/in2gpu_tutorials/blob/fcdfe647183bf29b44bc9fa7e1b76d7a1dac27a2/in2gpu_tutorials/Chapter_2/c2_2_DrawCubeIndex/CubeIndex.cpp
     GLint indices [36] =
@@ -38,7 +38,7 @@ public:
     QVector3D Normales[24]={
         frontN, frontN, frontN, frontN,   //front
         rightN, rightN, rightN, rightN,   //right
-        backN, backN, backN,    backN,  //back
+        backN, backN, backN, backN,  //back
         leftN, leftN, leftN, leftN,  //left
         upperN, upperN, upperN, upperN,  //upper
         bottomN, bottomN, bottomN, bottomN, //bottom

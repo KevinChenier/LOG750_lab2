@@ -57,6 +57,7 @@ protected :
 
     virtual void mousePressEvent(QMouseEvent* e);
     virtual void mouseMoveEvent(QMouseEvent* e);
+    virtual void animate();
 
 private:
     void initRenderShaders();
@@ -102,6 +103,9 @@ private:
     int m_cubeAmbiant;
     int m_cubeSpecular;
     int m_cubeDiffuse;
+
+    QVector3D animationAxis;
+    float animationCurrentAngle;
 };
 
 #endif // SIMPLEVIEWER_H

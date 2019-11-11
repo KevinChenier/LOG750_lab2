@@ -17,8 +17,8 @@ namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
     const int numVerticePerCube = 24;
-    const int numCubesPerRow = 11;
-    const int numCubesPerCol = 11;
+    const int numCubesPerRow = 10;
+    const int numCubesPerCol = 10;
     int numCubes = numCubesPerRow * numCubesPerCol;
     const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;
@@ -92,7 +92,7 @@ void Viewer::draw()
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
 
         // Translate cube to center first
-        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret);
+        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
 
@@ -237,12 +237,12 @@ void Viewer::initGeometryCube()
     // Generate surrounding vertices
     int v = 0;
 
-   QQueue<Cube*> queueCube = graph; // TODO need call BFS
+   QQueue<Cube*> queueCube = graph;
    int sizeQueue = queueCube.length();
 
-   for (int i=0; i<numCubes; ++i)
+   for (int i=0; i<sizeQueue; ++i)
     {
-        if (v<numVertices && i< sizeQueue){
+        if (v<numVertices) {
 
             Cube* currentCube = queueCube[i] ;
             QQueue<QVector3D> cubeVertices = currentCube->getVertices() ;
@@ -251,9 +251,9 @@ void Viewer::initGeometryCube()
                 QVector3D currentVertice = cubeVertices.dequeue();
                 QVector3D currentNormal =  currentCube->Normales[v%numVerticePerCube] ;
 
-                vertices[v][0] =currentVertice.x();
-                vertices[v][1] =currentVertice.y();
-                vertices[v][2] =currentVertice.z();
+                vertices[v][0] = currentVertice.x();
+                vertices[v][1] = currentVertice.y();
+                vertices[v][2] = currentVertice.z();
 
                 normals[v][0] = currentNormal.x();
                 normals[v][1] = currentNormal.y();
@@ -318,7 +318,7 @@ void Viewer::initScene()
             Cube* currentCube = new Cube();
             QMatrix4x4 cubeTranformation;
             // Center the scene with QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2
-            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret);
+            cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) + QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * -dimArret/2);
             currentCube->addTransformation(cubeTranformation);
             graph.append(currentCube);
         }
@@ -333,11 +333,13 @@ void Viewer::addCube()
     QMatrix4x4 newCubeTranformation;
     Cube* currentCubeSelected = graph[selectedCubeOnHover];
 
-    newCubeTranformation.translate(Cube::getNormal(m_selectedFace) * Cube::dimArret);
+    QVector3D normal = newCube->getNormal(m_selectedFace);
+    normal.normalize();
+    newCubeTranformation.translate(normal * Cube::dimArret);
 
     currentCubeSelected->addChild(newCube);
 
-    newCube->addTransformation(newCubeTranformation * currentCubeSelected->getTransformation());
+    newCube->addTransformation(newCubeTranformation*currentCubeSelected->getTransformation());
     graph.append(newCube);
 }
 
@@ -417,7 +419,7 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
         const float dimArret = Cube::dimArret;
 
         // Translate cube to center first
-        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret);
+        modelViewMatrix.translate(QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
         // Translate to current cube transformation
         m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix*currentCubeTranformation);
 
@@ -468,7 +470,7 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
     selectedCubeOnHover = floor(value/6.f);
     std::cout << "m_selectedCubeOnHover: " << selectedCubeOnHover << std::endl;
 
-    if(selectCubeOnClick)
+    if(selectCubeOnClick && !animationIsStarted())
     {
         m_selectedCubeOnClick = selectedCubeOnHover;
         std::cout << "m_selectedCubeOnClick: " << m_selectedCubeOnClick << std::endl;
@@ -479,40 +481,51 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
 }
 
 void Viewer::rotateAroundXAxisPositive() {
-    rotateAroundAxis(QVector3D(90.f,0.f,0.f));
+    rotateAroundAxis(QVector3D(1.f,0.f,0.f));
 }
 
 void Viewer::rotateAroundXAxisNegative() {
-    rotateAroundAxis(QVector3D(-90.f,0.f,0.f));
+    rotateAroundAxis(QVector3D(-1.f,0.f,0.f));
 }
 
 void Viewer::rotateAroundYAxisPositive() {
-    rotateAroundAxis(QVector3D(0.f,90.f,0.f));
+    rotateAroundAxis(QVector3D(0.f,1.f,0.f));
 }
 
 void Viewer::rotateAroundYAxisNegative() {
-    rotateAroundAxis(QVector3D(0.f,-90.f,0.f));
+    rotateAroundAxis(QVector3D(0.f,-1.f,0.f));
 }
 
 void Viewer::rotateAroundZAxisPositive() {
-    rotateAroundAxis(QVector3D(0.f,0.f,90.f));
+    rotateAroundAxis(QVector3D(0.f,0.f,1.f));
 }
 
 void Viewer::rotateAroundZAxisNegative() {
-    rotateAroundAxis(QVector3D(0.f,0.f,-90.f));
+    rotateAroundAxis(QVector3D(0.f,0.f,-1.f));
 }
 
 void Viewer::rotateAroundAxis(QVector3D axis) {
 
+    if(animationIsStarted()) return;
+
+    animationAxis = axis;
+    startAnimation();
+}
+
+void Viewer::animate() {
+
     if(m_selectedCubeOnClick < 0) return;
 
-    Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
     QMatrix4x4 rotM;
+    rotM.rotate(1.f, animationAxis);
+    animationCurrentAngle++;
 
-    QQuaternion rotQ = QQuaternion::fromEulerAngles(axis);
-    rotM.rotate(rotQ);
-
+    Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
     currentCubeSelected->addTransformation(rotM);
 
-    update();
+    if(animationCurrentAngle == 90.f)
+    {
+        stopAnimation();
+        animationCurrentAngle = 0;
+    }
 }
