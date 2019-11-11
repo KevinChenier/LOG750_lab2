@@ -11,15 +11,19 @@ void
 main()
 {
     // Get lighting vectors
-    vec3 LightDirection = normalize(vec3(0.0)-fPosition);	// We assume light is at camera position
+    vec3 pointLightDirection = normalize(vec3(0.0)-fPosition);	// We assume light is at camera position
     vec3 nfNormal = normalize(fNormal);
     vec3 nviewDirection = normalize(vec3(0.0)-fPosition);
 
+    // Get directional light vectors
+    vec3 directionalLightDirection = normalize(vec3(-1, -1, -1) - fPosition); // Directional light is at (-1,-1,-1)
+    float directionalLightIntensity = max(0.3, dot(nfNormal, normalize(-directionalLightDirection.xyz)));
+
     // Compute diffuse component
-    float diffuse = max(0.0, dot(nfNormal, LightDirection));
+    float diffuse = max(0.0, dot(nfNormal, pointLightDirection));
 
     // Compute specular component
-    vec3 Rl = normalize(-LightDirection+2.0*nfNormal*dot(nfNormal,LightDirection));
+    vec3 Rl = normalize(-pointLightDirection+2.0*nfNormal*dot(nfNormal, pointLightDirection));
     float specular = 0.1*pow(max(0.0, dot(Rl, nviewDirection)), 16);
 
     // Compute final color
@@ -46,5 +50,5 @@ main()
     diffuse += cubeDiffuse;
     specular += cubeSpecular;
 
-    fColor = vec4(color * (diffuse +  specular), 1);
+    fColor = vec4(color * directionalLightIntensity * (diffuse +  specular), 1);
 }
