@@ -18,4 +18,3 @@ QMatrix4x4 Node::getTransformation()
     }
     return transformation;
 }
-
