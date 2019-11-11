@@ -43,7 +43,6 @@ main()
     }
 
     // Add cube "texture"
-
     if(!drawingSelectedCubeOnClick && !drawingSelectedFace)
         color += cubeAmbiant;
 

@@ -327,7 +327,7 @@ void Viewer::initScene()
 
 void Viewer::addCube()
 {
-    if(m_selectedFace == -1) return;
+    if(m_selectedFace == -1 || animationIsStarted()) return;
 
     Cube* newCube = new Cube();
     QMatrix4x4 newCubeTranformation;
@@ -518,6 +518,7 @@ void Viewer::animate() {
 
     QMatrix4x4 rotM;
     rotM.rotate(1.f, animationAxis);
+
     animationCurrentAngle++;
 
     Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
