@@ -334,7 +334,7 @@ void Viewer::initScene()
 
 void Viewer::addCube()
 {
-    if(m_selectedFace == -1 || animationIsStarted()) return;
+    if(m_selectedFace < 0 || animationIsStarted()) return;
 
     Cube* newCube = new Cube();
 
@@ -357,6 +357,8 @@ void Viewer::addCube()
 
 void Viewer::deleteCube()
 {
+    if(selectedCubeOnHover < 0) return;
+
     Cube* currentCube = graph[selectedCubeOnHover];
 
     int numCubes = graph.length();
@@ -452,8 +454,6 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
         // Save transformations
         QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
         QMatrix4x4 currentCubeTranformation = graph[k]->getTransformation();
-
-        const float dimArret = Cube::dimArret;
 
         // Translate to current cube transformation
         m_programPicking->setUniformValue(m_mvMatrixLocationPicking, modelViewMatrix*currentCubeTranformation);
@@ -561,7 +561,6 @@ void Viewer::scaleCube()
     backToPlanOriginM = currentCubeSelected->getTransformation().inverted();
     backToCubeOriginM = currentCubeSelected->getTransformation();
     startAnimation();
-
 }
 void Viewer::animate() {
 
