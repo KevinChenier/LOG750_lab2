@@ -28,5 +28,8 @@ void MainWindow::addViewer(Viewer* viewer)
     // rotate Z
     QObject::connect(ui->pushButton_6, SIGNAL(clicked(bool)),viewer, SLOT(rotateAroundZAxisPositive()));
     QObject::connect(ui->pushButton_5, SIGNAL(clicked(bool)),viewer, SLOT(rotateAroundZAxisNegative()));
-
+    // Change colour
+    QObject::connect(ui->boxR, SIGNAL(valueChanged(double)),viewer, SLOT(setCubeR(double)));
+    QObject::connect(ui->boxG, SIGNAL(valueChanged(double)),viewer, SLOT(setCubeG(double)));
+    QObject::connect(ui->boxB, SIGNAL(valueChanged(double)),viewer, SLOT(setCubeB(double)));
 }

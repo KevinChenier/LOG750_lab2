@@ -21,6 +21,17 @@ public:
     bool hasChild(){ return nodes.length() == 0; }
     void addChild(Node* child) { nodes.append(child); }
 
+    void removeChild(Node* child){
+        QQueue<Node*> newNodes;
+        while(!nodes.empty()){
+            if(nodes.front() != child){
+                newNodes.append(nodes.front());
+            }
+            nodes.pop_front();
+        }
+        nodes = newNodes;
+    }
+
     void addTransformation(QMatrix4x4 tmpTransformation) {
         stackTransformation.append(tmpTransformation);
         int size = nodes.length();
