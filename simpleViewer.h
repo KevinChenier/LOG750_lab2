@@ -68,6 +68,10 @@ protected :
     virtual void animate();
 
 private:
+    enum animationType { rotation, scaling };
+
+    animationType currentAnimation = animationType::rotation;
+
     void initRenderShaders();
     void initPickingShaders();
     void initDLightingShaders();
@@ -79,7 +83,6 @@ private:
     void addCube();
     void scaleCube();
     void deleteCube();
-
 
     // VAOs and VBOs
     enum VAO_IDs { VAO_Cube, NumVAOs };
