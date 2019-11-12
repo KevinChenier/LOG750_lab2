@@ -40,6 +40,10 @@ public:
     Viewer();
     ~Viewer();
 
+    GLfloat getCubeR() const { return cubeR; }
+    GLfloat getCubeG() const { return cubeG; }
+    GLfloat getCubeB() const { return cubeB; }
+
 public slots:
     void cleanup();
 
@@ -50,6 +54,10 @@ public slots:
     void rotateAroundZAxisPositive();
     void rotateAroundZAxisNegative();
     void rotateAroundAxis(QVector3D axis);
+
+    void setCubeR(double r) { cubeR = r; }
+    void setCubeG(double g) { cubeG = g; }
+    void setCubeB(double b) { cubeB = b; }
 
 protected :
     virtual void draw();
@@ -69,6 +77,7 @@ private:
     void performSelection(int x, int y, bool selectCubeOnClick);
 
     void addCube();
+    void deleteCube();
 
     // VAOs and VBOs
     enum VAO_IDs { VAO_Cube, NumVAOs };
@@ -103,6 +112,16 @@ private:
     int m_cubeAmbiant;
     int m_cubeSpecular;
     int m_cubeDiffuse;
+
+    int m_cubeColor;
+    int m_newCube;
+
+    // Colour of Cube
+    GLfloat cubeR = 0.0f;
+    GLfloat cubeG = 1.0f;
+    GLfloat cubeB = 0.0f;
+
+    GLboolean isNewCube = false;
 
     QVector3D animationAxis;
     float animationCurrentAngle;

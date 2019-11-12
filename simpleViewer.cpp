@@ -80,15 +80,13 @@ void Viewer::draw()
         QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
         QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
 
-        // Set different material
-        currentCube->ambiant.setX(k%2);
-        currentCube->ambiant.setY(k%4);
-        currentCube->ambiant.setZ(k%6);
-
         // Set cube "material" in shader
         m_programRender->setUniformValue(m_cubeAmbiant, currentCube->ambiant);
         m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
+
+        m_programRender->setUniformValue(m_cubeColor, currentCube->color);
+        m_programRender->setUniformValue(m_newCube, currentCube->isNewCube);
 
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
@@ -190,6 +188,13 @@ void Viewer::initRenderShaders()
 
     if ((m_cubeDiffuse = m_programRender->uniformLocation("cubeDiffuse")) < 0)
         qDebug() << "Unable to find shader location for " << "cubeDiffuse";
+
+    if ((m_cubeColor = m_programRender->uniformLocation("cubeColor")) < 0)
+        qDebug() << "Unable to find shader location for " << "cubeColor";
+
+    if ((m_newCube = m_programRender->uniformLocation("newCube")) < 0)
+        qDebug() << "Unable to find shader location for " << "newCube";
+
 }
 
 void Viewer::initPickingShaders()
@@ -314,6 +319,12 @@ void Viewer::initScene()
         {
             Cube* currentCube = new Cube();
             QMatrix4x4 cubeTranformation;
+
+            int k = i+j;
+            currentCube->ambiant.setX(k%2);
+            currentCube->ambiant.setY(k%4);
+            currentCube->ambiant.setZ(k%6);
+
             // Center the scene with QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2
             cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) - QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
             currentCube->addTransformation(cubeTranformation);
@@ -327,6 +338,11 @@ void Viewer::addCube()
     if(m_selectedFace == -1 || animationIsStarted()) return;
 
     Cube* newCube = new Cube();
+
+    QVector3D color = QVector3D(2.0*getCubeR(), 2.0*getCubeG(), 2.0*getCubeB());
+    newCube->setColor(color);
+    newCube->setIsNewCube(true);
+
     QMatrix4x4 newCubeTranformation;
     Cube* currentCubeSelected = graph[selectedCubeOnHover];
 
@@ -338,6 +354,20 @@ void Viewer::addCube()
 
     newCube->addTransformation(newCubeTranformation*currentCubeSelected->getTransformation());
     graph.append(newCube);
+}
+
+void Viewer::deleteCube()
+{
+    Cube* currentCube = graph[selectedCubeOnHover];
+
+    int numCubes = graph.length();
+    for(int k = 0; k < numCubes; k++){
+        Cube* parentCube = graph[k];
+        parentCube->removeChild(currentCube);
+    }
+
+    graph.removeOne(currentCube);
+
 }
 
 void Viewer::mousePressEvent(QMouseEvent *e)
@@ -357,6 +387,11 @@ void Viewer::mousePressEvent(QMouseEvent *e)
             performSelection(e->x(), e->y(), true);
         }
     }
+    if((e->button() == Qt::RightButton))
+        {
+            deleteCube();
+            update();
+        }
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)

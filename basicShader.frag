@@ -4,6 +4,10 @@ uniform bool drawingSelectedFace;
 uniform vec3 cubeAmbiant;
 uniform float cubeDiffuse;
 uniform float cubeSpecular;
+
+uniform vec3 cubeColor;
+uniform bool newCube;
+
 in vec3 fNormal;
 in vec3 fPosition;
 out vec4 fColor;
@@ -29,6 +33,10 @@ main()
     // Compute final color
     vec3 color;
 
+    if(newCube){
+        color = cubeColor;
+    }
+
     if (drawingSelectedFace)
     {
         color = vec3(0.0 , 0.0, 1.0);
@@ -37,7 +45,7 @@ main()
     {
         color = vec3(1.0, 0.0, 0.0);
     }
-    else
+    else if(!newCube)
     {
         color = vec3(0.0, 1.0, 0.0);
     }
