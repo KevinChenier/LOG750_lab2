@@ -69,6 +69,7 @@ private:
     void performSelection(int x, int y, bool selectCubeOnClick);
 
     void addCube();
+    void scaleCube();
 
     // VAOs and VBOs
     enum VAO_IDs { VAO_Cube, NumVAOs };

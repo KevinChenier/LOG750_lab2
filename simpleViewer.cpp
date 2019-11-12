@@ -23,7 +23,7 @@ namespace
     const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;
     int numIndices = numCubes * numIndicePerCube;
-
+    int selectedAnimation = 0 ;
     // rootCube is not the first cube.
     QQueue<Cube*> graph;
 }
@@ -356,6 +356,10 @@ void Viewer::mousePressEvent(QMouseEvent *e)
         {
             performSelection(e->x(), e->y(), true);
         }
+        if(e->modifiers() == Qt::CTRL+Qt::ShiftModifier)
+        {
+            scaleCube();
+        }
     }
 }
 
@@ -363,8 +367,10 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
     QGLViewer::mouseMoveEvent(e);
     performSelection(e->x(), e->y(), false);
+
     update();
 }
+
 
 void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
 {
@@ -505,27 +511,65 @@ void Viewer::rotateAroundAxis(QVector3D axis) {
 
     Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
 
+    selectedAnimation = 0 ;
     animationAxis = axis;
     backToPlanOriginM = currentCubeSelected->getTransformation().inverted();
     backToCubeOriginM = currentCubeSelected->getTransformation();
     startAnimation();
 }
+void Viewer::scaleCube()
+{
+    if(animationIsStarted() || m_selectedCubeOnClick < 0) return;
 
+    Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
+    selectedAnimation = 1 ;
+    backToPlanOriginM = currentCubeSelected->getTransformation().inverted();
+    backToCubeOriginM = currentCubeSelected->getTransformation();
+    startAnimation();
+
+}
 void Viewer::animate() {
 
     if(m_selectedCubeOnClick < 0) return;
-
-    QMatrix4x4 rotM;
-    rotM.rotate(animationIterationAngle, animationAxis);
-
-    animationCurrentAngle+=animationIterationAngle;
-
     Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
-    currentCubeSelected->addTransformation(backToCubeOriginM * rotM * backToPlanOriginM);
-
-    if(animationCurrentAngle >= animationMaxAngle)
+    QMatrix4x4 transformation;
+    switch(selectedAnimation)
     {
-        stopAnimation();
-        animationCurrentAngle = 0;
+        case 0:
+
+            transformation.rotate(animationIterationAngle, animationAxis);
+
+            animationCurrentAngle+=animationIterationAngle;
+
+
+            currentCubeSelected->addTransformation(backToCubeOriginM * transformation * backToPlanOriginM);
+
+            if(animationCurrentAngle >= animationMaxAngle)
+            {
+                stopAnimation();
+                animationCurrentAngle = 0;
+            }
+            break;
+        case 1:
+
+            float scale = 1.1;
+            if (animationCurrentAngle> 10)
+                scale = 0.9 ;
+
+            transformation.scale(scale,scale,scale);
+            currentCubeSelected->addTransformation(backToCubeOriginM * transformation * backToPlanOriginM);
+            animationCurrentAngle++;
+
+            if(animationCurrentAngle >= 20)
+            {
+                stopAnimation();
+                transformation.scale(1,1,1);
+                currentCubeSelected->addTransformation(backToCubeOriginM * transformation * backToPlanOriginM);
+                animationCurrentAngle = 0;
+
+            }
+            break;
+
     }
+
 }
