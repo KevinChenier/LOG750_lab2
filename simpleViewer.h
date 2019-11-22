@@ -68,7 +68,7 @@ protected :
     virtual void animate();
 
 private:
-    enum animationType { rotation, scaling };
+    enum animationType { rotation, scaling ,toolRotation};
 
     animationType currentAnimation = animationType::rotation;
 
@@ -77,6 +77,7 @@ private:
     void initDLightingShaders();
     void initGeometryCube();
     void initScene();
+    void toolManipulation();
 
     void performSelection(int x, int y, bool selectCubeOnClick);
 
@@ -100,6 +101,8 @@ private:
     int m_projMatrixLocation;
     int m_mvMatrixLocation;
     int m_normalMatrixLocation;
+    int m_vPositionTool;
+    int m_vNormalTool;
 
     // Picking shaders & locations
     QOpenGLShaderProgram *m_programPicking;
@@ -135,6 +138,24 @@ private:
 
     static constexpr float animationMaxAngle = 90.f;
     static constexpr float animationIterationAngle = animationMaxAngle/3.f;
+
+    // VAOs and VBOs
+    struct MeshGL
+    {
+      GLuint vao;
+      GLuint vbo;
+
+      QVector3D diffuse;
+      QVector3D specular;
+      GLfloat   specularExponent;
+
+      unsigned int numVertices;
+    };
+
+    std::vector<MeshGL> _meshesGL;
+
+    void loadObjFile();
+
 };
 
 #endif // SIMPLEVIEWER_H

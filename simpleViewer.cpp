@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 
 #include <iostream>
+#include "OBJLoader.h"
 using namespace std;
 
 #include <time.h>
@@ -23,6 +24,8 @@ namespace
     const int numIndicePerCube = 36;
     int numVertices = numCubes * numVerticePerCube;
     int numIndices = numCubes * numIndicePerCube;
+    QMatrix4x4 toolTransform;
+
     // rootCube is not the first cube.
     QQueue<Cube*> graph;
 }
@@ -50,6 +53,16 @@ void Viewer::cleanup()
     glDeleteBuffers(NumBuffers, m_Buffers);
     glDeleteVertexArrays(NumVAOs, m_VAOs);
 
+    // outil
+    for (unsigned int i=0; i<_meshesGL.size(); ++i)
+        {
+            // Set material properties
+
+            // Draw the mesh
+            glDeleteVertexArrays(1, &_meshesGL[i].vao);
+            glDeleteBuffers(1, &_meshesGL[i].vbo);
+        }
+      _meshesGL.clear();
     doneCurrent();
 }
 
@@ -110,7 +123,25 @@ void Viewer::draw()
         modelViewMatrix = originalModelViewMatrix;
         // Reset draw selected cube option
         m_programRender->setUniformValue(m_drawingSelectedCubeOnClick, false);
+
+
     }
+    // draw outil
+    // Draw the meshes
+
+
+    m_programRender->setUniformValue(m_mvMatrixLocation, toolTransform*modelViewMatrix);
+
+    for (unsigned int i=0; i<_meshesGL.size(); ++i)
+    {
+        // Draw the mesh
+        glBindVertexArray(_meshesGL[i].vao);
+        glDrawArrays(GL_TRIANGLES, 0, _meshesGL[i].numVertices);
+    }
+    setSceneRadius(10);
+    camera()->showEntireScene();
+
+
 }
 
 void Viewer::init()
@@ -129,13 +160,20 @@ void Viewer::init()
     // Create our VertexArrays Objects and VertexBuffer Objects
     glGenVertexArrays(NumVAOs, m_VAOs);
     glGenBuffers(NumBuffers, m_Buffers);
-    setSceneRadius(10);          // scene has a 10 OpenGL units radius
+    setSceneRadius(10);
     camera()->showEntireScene();
+
     initScene();
     initGeometryCube();
 
     // Init GL properties
     glPointSize(10.0f);
+
+    // Load the 3D model from the obj file
+      loadObjFile();
+      toolTransform.setToIdentity();
+      toolTransform.translate( QVector3D(5, 0 , 5));
+
 }
 
 void Viewer::initRenderShaders()
@@ -226,6 +264,8 @@ void Viewer::initPickingShaders()
 
     if ((m_projMatrixLocationPicking = m_programPicking->uniformLocation("projMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "projMatrix";
+
+
 }
 
 void Viewer::initGeometryCube()
@@ -382,6 +422,7 @@ void Viewer::mousePressEvent(QMouseEvent *e)
         {
             addCube();
             update();
+
         }
         if((e->modifiers() == Qt::CTRL))
         {
@@ -397,6 +438,8 @@ void Viewer::mousePressEvent(QMouseEvent *e)
             deleteCube();
             update();
         }
+    toolManipulation();
+
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
@@ -448,7 +491,7 @@ void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
     m_programPicking->setUniformValue(m_projMatrixLocationPicking, projectionMatrix);
 
     int numCubes = graph.length();
-
+    glBindVertexArray(m_VAOs[VAO_Cube]);
     for (int k=0; k<numCubes; ++k)
     {
         // Save transformations
@@ -562,14 +605,28 @@ void Viewer::scaleCube()
     backToCubeOriginM = currentCubeSelected->getTransformation();
     startAnimation();
 }
+
+void Viewer::toolManipulation()
+{
+    if(animationIsStarted()) return;
+
+    currentAnimation = animationType::toolRotation;
+    animationAxis = QVector3D(1.f,0.f,0.f);
+    backToPlanOriginM = toolTransform.inverted();
+    backToCubeOriginM = toolTransform;
+    startAnimation();
+}
 void Viewer::animate() {
 
-    if(m_selectedCubeOnClick < 0) return;
-    Cube* currentCubeSelected = graph[m_selectedCubeOnClick];
+
+    Cube* currentCubeSelected;
     QMatrix4x4 transformation;
     switch(currentAnimation)
     {
         case animationType::rotation:
+
+            if(m_selectedCubeOnClick < 0) return;
+            currentCubeSelected = graph[m_selectedCubeOnClick];
 
             transformation.rotate(animationIterationAngle, animationAxis);
 
@@ -584,8 +641,25 @@ void Viewer::animate() {
             }
             break;
 
-        case animationType::scaling:
+        case animationType::toolRotation:
 
+
+            transformation.rotate(animationIterationAngle, animationAxis);
+
+            animationCurrentAngle+=animationIterationAngle;
+
+//            toolTransform = transformation*toolTransform;
+
+            if(animationCurrentAngle >= animationMaxAngle)
+            {
+                stopAnimation();
+                animationCurrentAngle = 0;
+            }
+            break;
+
+        case animationType::scaling:
+            if(m_selectedCubeOnClick < 0) return;
+            currentCubeSelected = graph[m_selectedCubeOnClick];
             float scale = 1.1;
             if (animationCurrentAngle> 10)
                 scale = 0.9;
@@ -604,3 +678,55 @@ void Viewer::animate() {
             break;
     }
 }
+
+void Viewer::loadObjFile()
+{
+    // Load the obj file
+    OBJLoader::Loader loader("assets/tournevis.obj");
+
+    // Create a GL object for each mesh extracted from the OBJ file
+    const std::vector<OBJLoader::Mesh>& meshes = loader.getMeshes();
+    const std::vector<OBJLoader::Material>& materials = loader.getMaterials();
+    for (unsigned int i=0; i<meshes.size(); ++i)
+    {
+        if (meshes[i].vertices.size()==0)
+            continue;
+
+        MeshGL meshGL;
+        meshGL.numVertices = meshes[i].vertices.size();
+
+        // Set material properties of the mesh
+        const float *Kd = materials[meshes[i].materialID].Kd;
+        const float *Ks = materials[meshes[i].materialID].Ks;
+
+        meshGL.diffuse = QVector3D(Kd[0], Kd[1], Kd[2]);
+        meshGL.specular = QVector3D(Ks[0], Ks[1], Ks[2]);
+        meshGL.specularExponent = materials[meshes[i].materialID].Kn;
+
+        // Create its VAO and VBO object
+        glGenVertexArrays(1, &meshGL.vao);
+        glGenBuffers(1, &meshGL.vbo);
+
+        // Fill VBO with vertices data
+        GLsizei dataSize = meshes[i].vertices.size() * sizeof(OBJLoader::Vertex);
+        GLsizei stride = sizeof(OBJLoader::Vertex);
+        GLsizeiptr positionOffset = 0;
+        GLsizeiptr normalOffset = sizeof(OBJLoader::Vertex::position);
+        //GLsizeiptr uvOffset = normalOffset + sizeof(OBJLoader::Vertex::normal);
+
+        glBindBuffer(GL_ARRAY_BUFFER, meshGL.vbo);
+        glBufferData(GL_ARRAY_BUFFER, dataSize, &meshes[i].vertices[0], GL_STATIC_DRAW);
+
+//        // Set VAO that binds the shader vertices inputs to the buffer data
+        glBindVertexArray(meshGL.vao);
+
+        glVertexAttribPointer(m_vPositionLocation, 3, GL_FLOAT, GL_FALSE, stride, BUFFER_OFFSET(positionOffset));
+        glEnableVertexAttribArray(m_vPositionLocation);
+
+        glVertexAttribPointer(m_vNormalLocation, 3, GL_FLOAT, GL_FALSE, stride, BUFFER_OFFSET(normalOffset));
+        glEnableVertexAttribArray(m_vNormalLocation);
+
+        // Add it to the list
+        _meshesGL.push_back(meshGL);
+    }
+  }

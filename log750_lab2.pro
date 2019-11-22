@@ -13,6 +13,7 @@ TEMPLATE = app
 
 
 SOURCES += QGLViewer/camera.cpp \
+           OBJLoader.cpp \
            QGLViewer/constraint.cpp \
            QGLViewer/frame.cpp \
            QGLViewer/keyFrameInterpolator.cpp \
@@ -30,6 +31,7 @@ SOURCES += QGLViewer/camera.cpp \
            simpleViewer.cpp
 
 HEADERS  += QGLViewer/camera.h \
+            OBJLoader.h \
             QGLViewer/config.h \
             QGLViewer/constraint.h \
             QGLViewer/domUtils.h \
@@ -47,6 +49,24 @@ HEADERS  += QGLViewer/camera.h \
             simpleViewer.h
 
 DISTFILES += \
+    assets/README.txt \
+    assets/Thumbs.db \
+    assets/assets/README.txt \
+    assets/assets/Thumbs.db \
+    assets/assets/dry_ground.jpg \
+    assets/assets/granite_floor.jpg \
+    assets/assets/grass2.jpg \
+    assets/assets/limestone_wall.jpg \
+    assets/assets/pierre_bouchardee.jpg \
+    assets/assets/wood_floor.jpg \
+    assets/dry_ground.jpg \
+    assets/granite_floor.jpg \
+    assets/grass2.jpg \
+    assets/limestone_wall.jpg \
+    assets/pierre_bouchardee.jpg \
+    assets/tournevis.mtl \
+    assets/tournevis.obj \
+    assets/wood_floor.jpg \
     basicShader.frag \
     basicShader.vert \
     constantColor.frag \
