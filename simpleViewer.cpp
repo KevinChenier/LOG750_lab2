@@ -170,7 +170,7 @@ void Viewer::init()
     glPointSize(10.0f);
 
     // Load the 3D model from the obj file
-      loadObjFile();
+      loadObjFile("assets/tournevis.obj");
       toolTransform.setToIdentity();
       toolTransform.translate( QVector3D(5, 0 , 5));
 
@@ -679,10 +679,10 @@ void Viewer::animate() {
     }
 }
 
-void Viewer::loadObjFile()
+void Viewer::loadObjFile(const std::string filePath)
 {
     // Load the obj file
-    OBJLoader::Loader loader("assets/tournevis.obj");
+    OBJLoader::Loader loader(filePath);
 
     // Create a GL object for each mesh extracted from the OBJ file
     const std::vector<OBJLoader::Mesh>& meshes = loader.getMeshes();
@@ -729,4 +729,4 @@ void Viewer::loadObjFile()
         // Add it to the list
         _meshesGL.push_back(meshGL);
     }
-  }
+}

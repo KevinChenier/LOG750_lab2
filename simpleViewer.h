@@ -154,7 +154,7 @@ private:
 
     std::vector<MeshGL> _meshesGL;
 
-    void loadObjFile();
+    void loadObjFile(const std::string filePath);
 
 };
 
