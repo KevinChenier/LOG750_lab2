@@ -4,6 +4,9 @@ uniform bool drawingSelectedFace;
 uniform vec3 cubeAmbiant;
 uniform float cubeDiffuse;
 uniform float cubeSpecular;
+uniform vec3 Kd;
+uniform vec3 Ks;
+uniform float Kn;
 
 uniform vec3 cubeColor;
 uniform bool newCube;
@@ -24,11 +27,11 @@ main()
     float directionalLightIntensity = max(0.3, dot(nfNormal, normalize(-directionalLightDirection.xyz)));
 
     // Compute diffuse component
-    float diffuse = max(0.0, dot(nfNormal, pointLightDirection));
+    vec3 diffuse = Kd * max(0.0, dot(nfNormal, pointLightDirection));
 
     // Compute specular component
     vec3 Rl = normalize(-pointLightDirection+2.0*nfNormal*dot(nfNormal, pointLightDirection));
-    float specular = 0.5*pow(max(0.0, dot(Rl, nviewDirection)), 5);
+    vec3 specular = Ks*pow(max(0.0, dot(Rl, nviewDirection)), Kn);
 
     // Compute final color
     vec3 color;
@@ -47,15 +50,15 @@ main()
     }
     else if(!newCube)
     {
-        color = vec3(0.0, 1.0, 0.0);
+        //color = vec3(0.0, 1.0, 0.0);
     }
 
     // Add cube "texture"
-    if(!drawingSelectedCubeOnClick && !drawingSelectedFace)
-        color += cubeAmbiant;
+    //if(!drawingSelectedCubeOnClick && !drawingSelectedFace)
+        //color += cubeAmbiant;
 
-    diffuse += cubeDiffuse;
-    specular += cubeSpecular;
+    //diffuse += cubeDiffuse;
+    //specular += cubeSpecular;
 
     fColor = vec4(color * directionalLightIntensity * (diffuse +  specular), 1);
 }

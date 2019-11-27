@@ -55,14 +55,15 @@ void Viewer::cleanup()
 
     // outil
     for (unsigned int i=0; i<_meshesGL.size(); ++i)
-        {
-            // Set material properties
+    {
+        // Set material properties
 
-            // Draw the mesh
-            glDeleteVertexArrays(1, &_meshesGL[i].vao);
-            glDeleteBuffers(1, &_meshesGL[i].vbo);
-        }
-      _meshesGL.clear();
+        // Draw the mesh
+        glDeleteVertexArrays(1, &_meshesGL[i].vao);
+        glDeleteBuffers(1, &_meshesGL[i].vbo);
+    }
+
+    _meshesGL.clear();
     doneCurrent();
 }
 
@@ -134,6 +135,12 @@ void Viewer::draw()
 
     for (unsigned int i=0; i<_meshesGL.size(); ++i)
     {
+
+        // Set its material properties
+        m_programRender->setUniformValue(m_KdLoc, _meshesGL[i].diffuse);
+        m_programRender->setUniformValue(m_KsLoc, _meshesGL[i].specular);
+        m_programRender->setUniformValue(m_KnLoc, _meshesGL[i].specularExponent);
+
         // Draw the mesh
         glBindVertexArray(_meshesGL[i].vao);
         glDrawArrays(GL_TRIANGLES, 0, _meshesGL[i].numVertices);
@@ -170,7 +177,7 @@ void Viewer::init()
     glPointSize(10.0f);
 
     // Load the 3D model from the obj file
-      loadObjFile("assets/tournevis.obj");
+
       toolTransform.setToIdentity();
       toolTransform.translate( QVector3D(5, 0 , 5));
 
@@ -232,6 +239,16 @@ void Viewer::initRenderShaders()
     if ((m_newCube = m_programRender->uniformLocation("newCube")) < 0)
         qDebug() << "Unable to find shader location for " << "newCube";
 
+    if ((m_KdLoc = m_programRender->uniformLocation("Kd")) < 0)
+        qDebug() << "Unable to find shader location for " << "Kd";
+
+    if ((m_KsLoc = m_programRender->uniformLocation("Ks")) < 0)
+        qDebug() << "Unable to find shader location for " << "Ks";
+
+    if ((m_KnLoc = m_programRender->uniformLocation("Kn")) < 0)
+        qDebug() << "Unable to find shader location for " << "Kn";
+
+    loadObjFile("assets/tournevis.obj");
 }
 
 void Viewer::initPickingShaders()
@@ -717,7 +734,7 @@ void Viewer::loadObjFile(const std::string filePath)
         glBindBuffer(GL_ARRAY_BUFFER, meshGL.vbo);
         glBufferData(GL_ARRAY_BUFFER, dataSize, &meshes[i].vertices[0], GL_STATIC_DRAW);
 
-//        // Set VAO that binds the shader vertices inputs to the buffer data
+        // Set VAO that binds the shader vertices inputs to the buffer data
         glBindVertexArray(meshGL.vao);
 
         glVertexAttribPointer(m_vPositionLocation, 3, GL_FLOAT, GL_FALSE, stride, BUFFER_OFFSET(positionOffset));

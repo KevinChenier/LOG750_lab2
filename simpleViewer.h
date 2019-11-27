@@ -103,6 +103,9 @@ private:
     int m_normalMatrixLocation;
     int m_vPositionTool;
     int m_vNormalTool;
+    GLint m_KdLoc;
+    GLint m_KsLoc;
+    GLint m_KnLoc;
 
     // Picking shaders & locations
     QOpenGLShaderProgram *m_programPicking;
