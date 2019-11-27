@@ -129,7 +129,6 @@ void Viewer::draw()
     // draw outil
     // Draw the meshes
 
-    camera()->setZNearCoefficient(0.000001);
     camera()->setSceneRadius(100);
 
     m_programRender->setUniformValue(m_mvMatrixLocation, toolTransform);
