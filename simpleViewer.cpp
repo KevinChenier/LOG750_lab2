@@ -62,7 +62,7 @@ void Viewer::cleanup()
             glDeleteVertexArrays(1, &_meshesGL[i].vao);
             glDeleteBuffers(1, &_meshesGL[i].vbo);
         }
-      _meshesGL.clear();
+    _meshesGL.clear();
     doneCurrent();
 }
 
@@ -129,8 +129,10 @@ void Viewer::draw()
     // draw outil
     // Draw the meshes
 
+    camera()->setZNearCoefficient(0.000001);
+    camera()->setSceneRadius(100);
 
-    m_programRender->setUniformValue(m_mvMatrixLocation, toolTransform*modelViewMatrix);
+    m_programRender->setUniformValue(m_mvMatrixLocation, toolTransform);
 
     for (unsigned int i=0; i<_meshesGL.size(); ++i)
     {
@@ -138,8 +140,6 @@ void Viewer::draw()
         glBindVertexArray(_meshesGL[i].vao);
         glDrawArrays(GL_TRIANGLES, 0, _meshesGL[i].numVertices);
     }
-    setSceneRadius(10);
-    camera()->showEntireScene();
 
 
 }
@@ -170,10 +170,9 @@ void Viewer::init()
     glPointSize(10.0f);
 
     // Load the 3D model from the obj file
-      loadObjFile("assets/tournevis.obj");
-      toolTransform.setToIdentity();
-      toolTransform.translate( QVector3D(5, 0 , 5));
-
+    loadObjFile("assets/tournevis.obj");
+    toolTransform.setToIdentity();
+    toolTransform.translate(QVector3D(3,-3,-15));
 }
 
 void Viewer::initRenderShaders()
@@ -264,8 +263,6 @@ void Viewer::initPickingShaders()
 
     if ((m_projMatrixLocationPicking = m_programPicking->uniformLocation("projMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "projMatrix";
-
-
 }
 
 void Viewer::initGeometryCube()
@@ -421,6 +418,7 @@ void Viewer::mousePressEvent(QMouseEvent *e)
         if((e->modifiers() == Qt::ShiftModifier))
         {
             addCube();
+            toolManipulation();
             update();
 
         }
@@ -434,12 +432,10 @@ void Viewer::mousePressEvent(QMouseEvent *e)
         }
     }
     if((e->button() == Qt::RightButton))
-        {
+    {
             deleteCube();
             update();
-        }
-    toolManipulation();
-
+    }
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
@@ -611,9 +607,7 @@ void Viewer::toolManipulation()
     if(animationIsStarted()) return;
 
     currentAnimation = animationType::toolRotation;
-    animationAxis = QVector3D(1.f,0.f,0.f);
-    backToPlanOriginM = toolTransform.inverted();
-    backToCubeOriginM = toolTransform;
+    animationAxis = QVector3D(-1.f,0.f,0.f);
     startAnimation();
 }
 void Viewer::animate() {
@@ -643,24 +637,34 @@ void Viewer::animate() {
 
         case animationType::toolRotation:
 
+            if(!meshRotationReachedEnd)
+            {
+                toolTransform.rotate(animationIterationAngle, animationAxis);
+                animationCurrentAngle+=animationIterationAngle;
+            }
+            else
+            {
+                toolTransform.rotate(-animationIterationAngle, animationAxis);
+                animationCurrentAngle-=animationIterationAngle;
+            }
+            if(animationCurrentAngle >= animationMaxAngle) meshRotationReachedEnd = true;
 
-            transformation.rotate(animationIterationAngle, animationAxis);
-
-            animationCurrentAngle+=animationIterationAngle;
-
-//            toolTransform = transformation*toolTransform;
-
-            if(animationCurrentAngle >= animationMaxAngle)
+            if(meshRotationReachedEnd && animationCurrentAngle <= 0)
             {
                 stopAnimation();
                 animationCurrentAngle = 0;
+                meshRotationReachedEnd = false;
             }
             break;
 
         case animationType::scaling:
+
             if(m_selectedCubeOnClick < 0) return;
+
             currentCubeSelected = graph[m_selectedCubeOnClick];
+
             float scale = 1.1;
+
             if (animationCurrentAngle> 10)
                 scale = 0.9;
 
