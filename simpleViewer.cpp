@@ -81,6 +81,7 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
 
+     initGeometryCube();
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
 
@@ -282,11 +283,12 @@ void Viewer::initGeometryCube()
         if (v<numVertices) {
 
             Cube* currentCube = queueCube[i] ;
+            QMatrix4x4 currentCubeTransformation = currentCube->getTransformation();
             QQueue<QVector3D> cubeVertices = currentCube->getVertices() ;
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
-                QVector3D currentNormal =  currentCube->Normales[v%numVerticePerCube] ;
+                QVector3D currentNormal =  currentCubeTransformation*currentCube->Normales[v%numVerticePerCube] ;
 
                 vertices[v][0] = currentVertice.x();
                 vertices[v][1] = currentVertice.y();
@@ -296,10 +298,10 @@ void Viewer::initGeometryCube()
                 normals[v][1] = currentNormal.y();
                 normals[v][2] = currentNormal.z();
 
-                //qInfo() << "vertices" << v;
-                //qInfo() << QString::number(vertices[v][0]);
-                //qInfo() << QString::number(vertices[v][1]);
-                //qInfo() << QString::number(vertices[v][2]);
+//                qInfo() << "vertices" << v;
+//                qInfo() << QString::number(normals[v][0]);
+//                qInfo() << QString::number(normals[v][1]);
+//                qInfo() << QString::number(normals[v][2]);
 
                 v++;
             }
@@ -380,14 +382,15 @@ void Viewer::addCube()
 
     QMatrix4x4 newCubeTranformation;
     Cube* currentCubeSelected = graph[selectedCubeOnHover];
-
+    QMatrix4x4 modelViewMatrix;
+    camera()->getModelViewMatrix(modelViewMatrix);
     QVector3D normal = newCube->getNormal(m_selectedFace);
     normal.normalize();
     newCubeTranformation.translate(normal * Cube::dimArret);
 
     currentCubeSelected->addChild(newCube);
 
-    newCube->addTransformation(newCubeTranformation*currentCubeSelected->getTransformation());
+    newCube->addTransformation(currentCubeSelected->getTransformation()*newCubeTranformation);
     graph.append(newCube);
 }
 
@@ -409,6 +412,7 @@ void Viewer::deleteCube()
 
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
+    initGeometryCube();
     QGLViewer::mousePressEvent(e);
     std::cout << "Viewer::mousePressEvent" << std::endl;
 
