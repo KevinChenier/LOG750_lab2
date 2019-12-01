@@ -374,6 +374,8 @@ void Viewer::addCube()
 {
     if(m_selectedFace < 0 || animationIsStarted()) return;
 
+    toolManipulation();
+
     Cube* newCube = new Cube();
 
     QVector3D color = QVector3D(2.0*getCubeR(), 2.0*getCubeG(), 2.0*getCubeB());
@@ -421,7 +423,6 @@ void Viewer::mousePressEvent(QMouseEvent *e)
         if((e->modifiers() == Qt::ShiftModifier))
         {
             addCube();
-            toolManipulation();
             update();
 
         }
