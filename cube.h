@@ -15,6 +15,7 @@ public:
     // Getters
     QQueue<QVector3D> getVertices() override ;
     const QVector3D getNormal(int faceID);
+    const QQueue<QVector2D> getUVs();
 
     // source : https://github.com/in2gpu/in2gpu_tutorials/blob/fcdfe647183bf29b44bc9fa7e1b76d7a1dac27a2/in2gpu_tutorials/Chapter_2/c2_2_DrawCubeIndex/CubeIndex.cpp
     GLint indices [36] =
@@ -35,13 +36,22 @@ public:
     static constexpr QVector3D upperN = QVector3D(0,1,0);
     static constexpr QVector3D bottomN = QVector3D(0,-1,0);
 
-    QVector3D Normales[24]={
+    QVector3D Normales[24]= {
         frontN, frontN, frontN, frontN,   //front
         rightN, rightN, rightN, rightN,   //right
         backN, backN, backN, backN,  //back
         leftN, leftN, leftN, leftN,  //left
         upperN, upperN, upperN, upperN,  //upper
         bottomN, bottomN, bottomN, bottomN, //bottom
+    };
+
+    GLfloat UVs[48] = {
+        0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0,
+        0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0,
+        0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0,
+        0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0,
+        0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0,
+        0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0
     };
 
     static constexpr float dimArret = 1.0f;

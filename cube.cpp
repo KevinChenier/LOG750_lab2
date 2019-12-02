@@ -62,3 +62,14 @@ const QVector3D Cube::getNormal(int faceID)
         case 5: return bottomN;
     }
 }
+
+const QQueue<QVector2D> Cube::getUVs()
+{
+    QQueue<QVector2D> UVsQueue;
+
+    for(int i = 0; i < 48; i+=2)
+    {
+        UVsQueue.append(QVector2D(UVs[i], UVs[i+1]));
+    }
+    return UVsQueue;
+}

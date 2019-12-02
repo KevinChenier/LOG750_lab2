@@ -53,16 +53,23 @@ void Viewer::cleanup()
     glDeleteBuffers(NumBuffers, m_Buffers);
     glDeleteVertexArrays(NumVAOs, m_VAOs);
 
-    // outil
+    // Delete mesh
     for (unsigned int i=0; i<_meshesGL.size(); ++i)
     {
-        // Set material properties
-
-        // Draw the mesh
         glDeleteVertexArrays(1, &_meshesGL[i].vao);
         glDeleteBuffers(1, &_meshesGL[i].vbo);
     }
     _meshesGL.clear();
+
+    // Delete textures
+    if (m_textureColor!=nullptr) {
+        delete m_textureColor;
+        m_textureColor = nullptr;
+    }
+    if (m_textureNormal != nullptr) {
+        delete m_textureNormal;
+        m_textureNormal = nullptr;
+    }
     doneCurrent();
 }
 
@@ -80,8 +87,8 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_projMatrixLocation, projectionMatrix);
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
-    m_programRender->setUniformValue(m_lightPos, QVector4D(0.f, 10.f, 0.f, 1.f));
-    m_programRender->setUniformValue(m_lightDirection, QVector3D(0.f, -1.f, 0.f));
+    m_programRender->setUniformValue(m_lightPositionLocation, QVector4D(0.f, 1.f, 0.f, 1.f));
+    m_programRender->setUniformValue(m_lightDirectionLocatiob, QVector3D(0.f, -1.f, 0.f));
 
     initGeometryCube();
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -106,6 +113,15 @@ void Viewer::draw()
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
 
+        // Assign textures
+        m_programRender->setUniformValue(m_texColorLocation, 0);
+        m_programRender->setUniformValue(m_texNormalLocation, 1);
+
+        glActiveTexture(GL_TEXTURE0);
+        m_textureColor->bind();
+        glActiveTexture(GL_TEXTURE1);
+        m_textureNormal->bind();
+
         bool drawSelectedCubeOnClick = k == m_selectedCubeOnClick;
         bool drawSelectedCubeOnHover = k == selectedCubeOnHover;
 
@@ -126,12 +142,9 @@ void Viewer::draw()
         modelViewMatrix = originalModelViewMatrix;
         // Reset draw selected cube option
         m_programRender->setUniformValue(m_drawingSelectedCubeOnClick, false);
-
-
     }
-    // draw outil
-    // Draw the meshes
 
+    // Draw the mesh
     camera()->setSceneRadius(100);
 
     m_programRender->setUniformValue(m_mvMatrixLocation, toolTransform);
@@ -142,8 +155,6 @@ void Viewer::draw()
         glBindVertexArray(_meshesGL[i].vao);
         glDrawArrays(GL_TRIANGLES, 0, _meshesGL[i].numVertices);
     }
-
-
 }
 
 void Viewer::init()
@@ -170,6 +181,15 @@ void Viewer::init()
 
     // Init GL properties
     glPointSize(10.0f);
+
+    // Load textures
+    m_textureColor = new QOpenGLTexture(QImage("assets/dry_ground.jpg").mirrored());
+    m_textureColor->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal = new QOpenGLTexture(QImage("assets/dry_ground_normals.jpg").mirrored());
+    m_textureNormal->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal->setMagnificationFilter(QOpenGLTexture::Linear);
 
     // Load the 3D model from the obj file
     loadObjFile("assets/tournevis.obj");
@@ -203,6 +223,9 @@ void Viewer::initRenderShaders()
     if ((m_vNormalLocation = m_programRender->attributeLocation("vNormal")) < 0)
         qDebug() << "Unable to find shader location for " << "vNormal";
 
+    if ((m_vUVLocation = m_programRender->attributeLocation("vUV")) < 0)
+        qDebug() << "Unable to find shader location for " << "vUV";
+
     if ((m_mvMatrixLocation = m_programRender->uniformLocation("mvMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "mvMatrix";
 
@@ -233,12 +256,17 @@ void Viewer::initRenderShaders()
     if ((m_newCube = m_programRender->uniformLocation("newCube")) < 0)
         qDebug() << "Unable to find shader location for " << "newCube";
 
-    if ((m_lightPos = m_programRender->uniformLocation("lightPos")) < 0)
+    if ((m_lightPositionLocation = m_programRender->uniformLocation("lightPos")) < 0)
         qDebug() << "Unable to find shader location for " << "lightPos";
 
-    if ((m_lightDirection = m_programRender->uniformLocation("lightDirection")) < 0)
+    if ((m_lightDirectionLocatiob = m_programRender->uniformLocation("lightDirection")) < 0)
         qDebug() << "Unable to find shader location for " << "lightDirection";
 
+    if ((m_texColorLocation = m_programRender->uniformLocation("texColor")) < 0)
+        qDebug() << "Unable to find shader location for " << "texColor";
+
+    if ((m_texNormalLocation = m_programRender->uniformLocation("texNormal")) < 0)
+        qDebug() << "Unable to find shader location for " << "texNormal";
 }
 
 void Viewer::initPickingShaders()
@@ -279,6 +307,7 @@ void Viewer::initGeometryCube()
     GLfloat vertices[numVertices][3];
     GLfloat normals[numVertices][3];
     GLint indices[numIndices];
+    GLfloat UVs[numVertices][2];
 
     // Generate surrounding vertices
     int v = 0;
@@ -292,11 +321,13 @@ void Viewer::initGeometryCube()
 
             Cube* currentCube = queueCube[i] ;
             QMatrix4x4 currentCubeTransformation = currentCube->getTransformation();
-            QQueue<QVector3D> cubeVertices = currentCube->getVertices() ;
+            QQueue<QVector3D> cubeVertices = currentCube->getVertices();
+            QQueue<QVector2D> cubeUVs = currentCube->getUVs();
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
-                QVector3D currentNormal =  currentCubeTransformation*currentCube->Normales[v%numVerticePerCube] ;
+                QVector3D currentNormal = currentCubeTransformation*currentCube->Normales[v%numVerticePerCube];
+                QVector2D currentUVs = cubeUVs.dequeue();
 
                 vertices[v][0] = currentVertice.x();
                 vertices[v][1] = currentVertice.y();
@@ -306,10 +337,13 @@ void Viewer::initGeometryCube()
                 normals[v][1] = currentNormal.y();
                 normals[v][2] = currentNormal.z();
 
-//                qInfo() << "vertices" << v;
-//                qInfo() << QString::number(normals[v][0]);
-//                qInfo() << QString::number(normals[v][1]);
-//                qInfo() << QString::number(normals[v][2]);
+                UVs[v][0] = currentUVs.x();
+                UVs[v][1] = currentUVs.y();
+
+                // qInfo() << "vertices" << v;
+                // qInfo() << QString::number(normals[v][0]);
+                // qInfo() << QString::number(normals[v][1]);
+                // qInfo() << QString::number(normals[v][2]);
 
                 v++;
             }
@@ -323,16 +357,17 @@ void Viewer::initGeometryCube()
         //qInfo() << "indec " << i ;
         //qInfo() << QString::number(indices[i]);
     }
-
     // Fill vertex VBO
     GLsizeiptr offsetVertices = 0;
     GLsizeiptr offsetNormals = sizeof(vertices);
-    GLsizeiptr dataSize = offsetNormals + GLsizeiptr(sizeof(normals));
+    GLsizeiptr offsetUVs = offsetNormals + GLsizeiptr(sizeof(normals));
+    GLsizeiptr dataSize = offsetUVs + GLsizeiptr(sizeof(UVs));
 
     glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[VBO_Cube]);
     glBufferData(GL_ARRAY_BUFFER, dataSize, nullptr, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, offsetVertices, sizeof(vertices), vertices);
     glBufferSubData(GL_ARRAY_BUFFER, offsetNormals, sizeof(normals), normals);
+    glBufferSubData(GL_ARRAY_BUFFER, offsetUVs, sizeof(UVs), UVs);
 
     // Set VAO
     glBindVertexArray(m_VAOs[VAO_Cube]);
@@ -342,6 +377,9 @@ void Viewer::initGeometryCube()
 
     glVertexAttribPointer(GLuint(m_vNormalLocation), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetNormals));
     glEnableVertexAttribArray(GLuint(m_vNormalLocation));
+
+    glVertexAttribPointer(GLuint(m_vUVLocation), 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetUVs));
+    glEnableVertexAttribArray(GLuint(m_vUVLocation));
 
     // Fill in indices EBO
     // Note: The current VAO will remember the call to glBindBuffer for a GL_ELEMENT_ARRAY_BUFFER.

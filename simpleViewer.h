@@ -30,6 +30,7 @@
 #include <QVector3D>
 #include <QGLViewer/qglviewer.h>
 #include <node.h>
+#include <QOpenGLTexture>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
@@ -95,16 +96,19 @@ private:
     // Render shaders & locations
     QOpenGLShaderProgram *m_programRender;
     int m_vPositionLocation;
+    int m_vNormalLocation;
+    int m_vUVLocation;
     int m_drawingSelectedCubeOnClick;
     int m_drawingSelectedFace;
-    int m_vNormalLocation;
     int m_projMatrixLocation;
     int m_mvMatrixLocation;
     int m_normalMatrixLocation;
     int m_vPositionTool;
     int m_vNormalTool;
-    int m_lightPos;
-    int m_lightDirection;
+    int m_lightPositionLocation;
+    int m_lightDirectionLocatiob;
+    int m_texColorLocation;
+    int m_texNormalLocation;
 
     // Picking shaders & locations
     QOpenGLShaderProgram *m_programPicking;
@@ -125,6 +129,10 @@ private:
 
     int m_cubeColor;
     int m_newCube;
+
+    // Cube textures
+    QOpenGLTexture *m_textureColor;
+    QOpenGLTexture *m_textureNormal;
 
     // Colour of Cube
     GLfloat cubeR = 0.0f;

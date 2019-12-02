@@ -4,11 +4,11 @@ uniform mat4 projMatrix;
 uniform mat3 normalMatrix;
 in vec4 vPosition;
 in vec3 vNormal;
-//in vec2 vTexCoords;
+in vec2 vUV;
 
 out vec3 fNormal;
 out vec3 fPosition;
-//out vec2 fTexCoords;
+out vec2 fUV;
 void
 main()
 {
@@ -17,5 +17,5 @@ main()
 
     fPosition = vEyeCoord.xyz;
     fNormal = normalMatrix*vNormal;
-    //fTexCoords = vTexCoords;
+    fUV = vUV;
 }

@@ -1,11 +1,4 @@
 #version 400 core
-struct material
-{
-    sampler2D diffuse;
-    sampler2D specular;
-    float shininess;
-};
-
 struct Light
 {
     vec3 position;
@@ -27,6 +20,9 @@ Light light;
 uniform vec4 lightPos;
 uniform vec3 lightDirection;
 
+uniform sampler2D texColor;
+uniform sampler2D texNormal;
+
 uniform bool drawingSelectedCubeOnClick;
 uniform bool drawingSelectedFace;
 
@@ -40,7 +36,7 @@ uniform mat3 normalMatrix;
 uniform vec3 cubeColor;
 uniform bool newCube;
 
-//in vec2 fTexCoords;
+in vec2 fUV;
 
 in vec3 fNormal;
 in vec3 fPosition;
@@ -51,7 +47,7 @@ main()
 {
     vec4 t = mvMatrix * lightPos;
 
-    light.position = vec3(lightPos);
+    light.position = vec3(t/t.r);
     light.direction = normalMatrix * lightDirection;
     light.cutOff = 0.9978f;
     light.outerCutOff = 0.2194f;
@@ -66,7 +62,7 @@ main()
 
     if (drawingSelectedFace)
     {
-        light.ambient = vec3(0.0, 0.0, 1.0);
+        light.ambient = vec3(0.0, 1.0, 0.0);
     }
     else if (drawingSelectedCubeOnClick)
     {
@@ -81,19 +77,19 @@ main()
     light.specular = cubeSpecular;
 
     // Ambient
-    vec3 ambient = light.ambient /* vec3(texture(material.diffuse, fTexCoords))*/;
+    vec4 ambient = vec4(light.ambient, 1.0) * texture(texColor, fUV);
 
     // Diffuse
     vec3 norm = normalize(fNormal);
     vec3 lightDir = normalize(light.position - fPosition);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff /* vec3(texture(material.diffuse, fTexCoords))*/;
+    vec3 diffuse = light.diffuse * diff;
 
     // Specular
     vec3 nviewDirection = normalize(vec3(0.0) - fPosition);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(nviewDirection, reflectDir), 0.0), 5/*material.shininess*/);
-    vec3 specular = light.specular * spec /* vec3(texture(material.specular, fTexCoords))*/;
+    float spec = pow(max(dot(nviewDirection, reflectDir), 0.0), 32);
+    vec3 specular = light.specular * spec;
 
     // Spotlight (soft edges)
     float theta = dot(lightDir, normalize(-light.direction));
@@ -109,5 +105,5 @@ main()
     diffuse  *= attenuation;
     specular *= attenuation;
 
-    fColor = vec4(ambient + diffuse + specular, 1.0f);
+    fColor = ambient + vec4(diffuse + specular, 1.0f);
 }
