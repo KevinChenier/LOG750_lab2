@@ -37,9 +37,11 @@ uniform vec3 cubeColor;
 uniform bool newCube;
 
 in vec2 fUV;
-
+in vec3 fTangent;
+in vec3 fBinormal;
 in vec3 fNormal;
 in vec3 fPosition;
+
 out vec4 fColor;
 
 void
@@ -76,11 +78,16 @@ main()
     light.diffuse = cubeDiffuse;
     light.specular = cubeSpecular;
 
+    // Build the matrix to transform from XYZ (normal map) space to TBN (tangent) space
+    // Each vector fills a column of the matrix
+    mat3 tbn = mat3(normalize(fTangent), normalize(fBinormal), normalize(fNormal));
+    vec3 normalFromTexture = texture(texNormal, fUV).rgb * 2.0 - vec3(1.0);
+    vec3 norm = normalize(tbn * normalFromTexture);
+
     // Ambient
     vec4 ambient = vec4(light.ambient, 1.0) * texture(texColor, fUV);
 
     // Diffuse
-    vec3 norm = normalize(fNormal);
     vec3 lightDir = normalize(light.position - fPosition);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = light.diffuse * diff;

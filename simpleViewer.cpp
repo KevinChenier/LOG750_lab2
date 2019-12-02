@@ -90,7 +90,6 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_lightPositionLocation, QVector4D(0.f, 1.f, 0.f, 1.f));
     m_programRender->setUniformValue(m_lightDirectionLocatiob, QVector3D(0.f, -1.f, 0.f));
 
-    initGeometryCube();
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
 
@@ -226,6 +225,9 @@ void Viewer::initRenderShaders()
     if ((m_vUVLocation = m_programRender->attributeLocation("vUV")) < 0)
         qDebug() << "Unable to find shader location for " << "vUV";
 
+    if ((m_vTangentLocation = m_programRender->attributeLocation("vTangent")) < 0)
+        qDebug() << "Unable to find shader location for " << "vTangent";
+
     if ((m_mvMatrixLocation = m_programRender->uniformLocation("mvMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "mvMatrix";
 
@@ -306,8 +308,9 @@ void Viewer::initGeometryCube()
     // Create vertices, faces and indices
     GLfloat vertices[numVertices][3];
     GLfloat normals[numVertices][3];
-    GLint indices[numIndices];
+    GLfloat tangents[numVertices][3];
     GLfloat UVs[numVertices][2];
+    GLint indices[numIndices];
 
     // Generate surrounding vertices
     int v = 0;
@@ -320,13 +323,13 @@ void Viewer::initGeometryCube()
         if (v<numVertices) {
 
             Cube* currentCube = queueCube[i] ;
-            QMatrix4x4 currentCubeTransformation = currentCube->getTransformation();
             QQueue<QVector3D> cubeVertices = currentCube->getVertices();
             QQueue<QVector2D> cubeUVs = currentCube->getUVs();
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
-                QVector3D currentNormal = currentCubeTransformation*currentCube->Normales[v%numVerticePerCube];
+                QVector3D currentNormal = currentCube->getNormal(v%numVerticePerCube);
+                QVector3D currentTangent = currentCube->getTangent(v%numVerticePerCube);
                 QVector2D currentUVs = cubeUVs.dequeue();
 
                 vertices[v][0] = currentVertice.x();
@@ -336,6 +339,10 @@ void Viewer::initGeometryCube()
                 normals[v][0] = currentNormal.x();
                 normals[v][1] = currentNormal.y();
                 normals[v][2] = currentNormal.z();
+
+                tangents[v][0] = currentTangent.x();
+                tangents[v][1] = currentTangent.y();
+                tangents[v][2] = currentTangent.z();
 
                 UVs[v][0] = currentUVs.x();
                 UVs[v][1] = currentUVs.y();
@@ -352,7 +359,7 @@ void Viewer::initGeometryCube()
 
     for (int i=0; i<numIndices; ++i)
     {
-        indices[i] = Cube().indices[i%numIndicePerCube]+(i/numIndicePerCube)*numVerticePerCube ;
+        indices[i] = Cube().getIndice(i%numIndicePerCube)+(i/numIndicePerCube)*numVerticePerCube ;
 
         //qInfo() << "indec " << i ;
         //qInfo() << QString::number(indices[i]);
@@ -361,13 +368,15 @@ void Viewer::initGeometryCube()
     GLsizeiptr offsetVertices = 0;
     GLsizeiptr offsetNormals = sizeof(vertices);
     GLsizeiptr offsetUVs = offsetNormals + GLsizeiptr(sizeof(normals));
-    GLsizeiptr dataSize = offsetUVs + GLsizeiptr(sizeof(UVs));
+    GLsizeiptr offsetTangents = offsetUVs + GLsizeiptr(sizeof(UVs));
+    GLsizeiptr dataSize = offsetTangents + GLsizeiptr(sizeof(tangents));
 
     glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[VBO_Cube]);
     glBufferData(GL_ARRAY_BUFFER, dataSize, nullptr, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, offsetVertices, sizeof(vertices), vertices);
     glBufferSubData(GL_ARRAY_BUFFER, offsetNormals, sizeof(normals), normals);
     glBufferSubData(GL_ARRAY_BUFFER, offsetUVs, sizeof(UVs), UVs);
+    glBufferSubData(GL_ARRAY_BUFFER, offsetTangents, sizeof(tangents), tangents);
 
     // Set VAO
     glBindVertexArray(m_VAOs[VAO_Cube]);
@@ -380,6 +389,9 @@ void Viewer::initGeometryCube()
 
     glVertexAttribPointer(GLuint(m_vUVLocation), 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetUVs));
     glEnableVertexAttribArray(GLuint(m_vUVLocation));
+
+    glVertexAttribPointer(GLuint(m_vTangentLocation), 3, GL_FLOAT, GL_TRUE, 0, BUFFER_OFFSET(offsetTangents));
+    glEnableVertexAttribArray(GLuint(m_vTangentLocation));
 
     // Fill in indices EBO
     // Note: The current VAO will remember the call to glBindBuffer for a GL_ELEMENT_ARRAY_BUFFER.
@@ -425,8 +437,6 @@ void Viewer::addCube()
 
     QMatrix4x4 newCubeTranformation;
     Cube* currentCubeSelected = graph[selectedCubeOnHover];
-    QMatrix4x4 modelViewMatrix;
-    camera()->getModelViewMatrix(modelViewMatrix);
     QVector3D normal = newCube->getNormal(m_selectedFace);
     normal.normalize();
     newCubeTranformation.translate(normal * Cube::dimArret);
@@ -455,7 +465,6 @@ void Viewer::deleteCube()
 
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
-    initGeometryCube();
     QGLViewer::mousePressEvent(e);
     std::cout << "Viewer::mousePressEvent" << std::endl;
 

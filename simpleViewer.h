@@ -98,6 +98,7 @@ private:
     int m_vPositionLocation;
     int m_vNormalLocation;
     int m_vUVLocation;
+    int m_vTangentLocation;
     int m_drawingSelectedCubeOnClick;
     int m_drawingSelectedFace;
     int m_projMatrixLocation;

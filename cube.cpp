@@ -63,6 +63,19 @@ const QVector3D Cube::getNormal(int faceID)
     }
 }
 
+const QVector3D Cube::getTangent(int faceID)
+{
+    switch(faceID%6)
+    {
+        case 0: return frontT;
+        case 1: return rightT;
+        case 2: return backT;
+        case 3: return leftT;
+        case 4: return upperT;
+        case 5: return bottomT;
+    }
+}
+
 const QQueue<QVector2D> Cube::getUVs()
 {
     QQueue<QVector2D> UVsQueue;
@@ -72,4 +85,9 @@ const QQueue<QVector2D> Cube::getUVs()
         UVsQueue.append(QVector2D(UVs[i], UVs[i+1]));
     }
     return UVsQueue;
+}
+
+const GLint Cube::getIndice(int index)
+{
+    return indices[index];
 }

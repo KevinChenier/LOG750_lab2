@@ -5,10 +5,13 @@ uniform mat3 normalMatrix;
 in vec4 vPosition;
 in vec3 vNormal;
 in vec2 vUV;
+in vec3 vTangent;
 
 out vec3 fNormal;
 out vec3 fPosition;
 out vec2 fUV;
+out vec3 fTangent;
+out vec3 fBinormal;
 void
 main()
 {
@@ -18,4 +21,6 @@ main()
     fPosition = vEyeCoord.xyz;
     fNormal = normalMatrix*vNormal;
     fUV = vUV;
+    fTangent.xyz = mat3(mvMatrix)*vTangent;
+    fBinormal = mat3(mvMatrix)*cross(vNormal, vTangent);
 }
