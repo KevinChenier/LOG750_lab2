@@ -46,9 +46,9 @@ public:
 
     static constexpr float dimArret = 1.0f;
 
-    QVector3D ambiant = QVector3D(1.f, 1.f, 1.f);
-    float diffuse = 0.1f;
-    float specular = 0.2f;
+    QVector3D ambient = QVector3D(0.9f, 0.9f, 0.9f);
+    QVector3D diffuse = QVector3D(0.1f, 0.1f, 0.1f);
+    QVector3D specular = QVector3D(0.2f, 0.2f, 0.2f);
 
     QVector3D color = QVector3D(0.0f, 1.0f, 0.0f);
     bool isNewCube = false;

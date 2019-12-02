@@ -103,6 +103,8 @@ private:
     int m_normalMatrixLocation;
     int m_vPositionTool;
     int m_vNormalTool;
+    int m_lightPos;
+    int m_lightDirection;
 
     // Picking shaders & locations
     QOpenGLShaderProgram *m_programPicking;
@@ -117,7 +119,7 @@ private:
     int selectedCubeOnHover;
 
     // Cubes
-    int m_cubeAmbiant;
+    int m_cubeAmbient;
     int m_cubeSpecular;
     int m_cubeDiffuse;
 

@@ -60,13 +60,19 @@ DISTFILES += \
     assets/assets/pierre_bouchardee.jpg \
     assets/assets/wood_floor.jpg \
     assets/dry_ground.jpg \
+    assets/dry_ground_normals.jpg \
     assets/granite_floor.jpg \
+    assets/granite_floor_normals.jpg \
     assets/grass2.jpg \
+    assets/grass_normals.jpg \
     assets/limestone_wall.jpg \
+    assets/limestone_wall_normals.jpg \
     assets/pierre_bouchardee.jpg \
+    assets/pierre_bouchardee_normals.jpg \
     assets/tournevis.mtl \
     assets/tournevis.obj \
     assets/wood_floor.jpg \
+    assets/wood_floor_normals.jpg \
     basicShader.frag \
     basicShader.vert \
     constantColor.frag \

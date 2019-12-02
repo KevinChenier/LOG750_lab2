@@ -55,13 +55,13 @@ void Viewer::cleanup()
 
     // outil
     for (unsigned int i=0; i<_meshesGL.size(); ++i)
-        {
-            // Set material properties
+    {
+        // Set material properties
 
-            // Draw the mesh
-            glDeleteVertexArrays(1, &_meshesGL[i].vao);
-            glDeleteBuffers(1, &_meshesGL[i].vbo);
-        }
+        // Draw the mesh
+        glDeleteVertexArrays(1, &_meshesGL[i].vao);
+        glDeleteBuffers(1, &_meshesGL[i].vbo);
+    }
     _meshesGL.clear();
     doneCurrent();
 }
@@ -80,8 +80,10 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_projMatrixLocation, projectionMatrix);
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
+    m_programRender->setUniformValue(m_lightPos, QVector4D(0.f, 10.f, 0.f, 1.f));
+    m_programRender->setUniformValue(m_lightDirection, QVector3D(0.f, -1.f, 0.f));
 
-     initGeometryCube();
+    initGeometryCube();
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
 
@@ -93,8 +95,8 @@ void Viewer::draw()
         QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
         QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
 
-        // Set cube "material" in shader
-        m_programRender->setUniformValue(m_cubeAmbiant, currentCube->ambiant);
+        // Set cube "lighting" in shader
+        m_programRender->setUniformValue(m_cubeAmbient, currentCube->ambient);
         m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
 
@@ -172,7 +174,7 @@ void Viewer::init()
     // Load the 3D model from the obj file
     loadObjFile("assets/tournevis.obj");
     toolTransform.setToIdentity();
-    toolTransform.translate(QVector3D(3,-3,-15));
+    toolTransform.translate(QVector3D(3,-3,-11));
 }
 
 void Viewer::initRenderShaders()
@@ -219,8 +221,8 @@ void Viewer::initRenderShaders()
     if ((m_cubeSpecular = m_programRender->uniformLocation("cubeSpecular")) < 0)
         qDebug() << "Unable to find shader location for " << "cubeSpecular";
 
-    if ((m_cubeAmbiant = m_programRender->uniformLocation("cubeAmbiant")) < 0)
-        qDebug() << "Unable to find shader location for " << "cubeAmbiant";
+    if ((m_cubeAmbient = m_programRender->uniformLocation("cubeAmbient")) < 0)
+        qDebug() << "Unable to find shader location for " << "cubeAmbient";
 
     if ((m_cubeDiffuse = m_programRender->uniformLocation("cubeDiffuse")) < 0)
         qDebug() << "Unable to find shader location for " << "cubeDiffuse";
@@ -230,6 +232,12 @@ void Viewer::initRenderShaders()
 
     if ((m_newCube = m_programRender->uniformLocation("newCube")) < 0)
         qDebug() << "Unable to find shader location for " << "newCube";
+
+    if ((m_lightPos = m_programRender->uniformLocation("lightPos")) < 0)
+        qDebug() << "Unable to find shader location for " << "lightPos";
+
+    if ((m_lightDirection = m_programRender->uniformLocation("lightDirection")) < 0)
+        qDebug() << "Unable to find shader location for " << "lightDirection";
 
 }
 
@@ -356,11 +364,6 @@ void Viewer::initScene()
         {
             Cube* currentCube = new Cube();
             QMatrix4x4 cubeTranformation;
-
-            int k = i+j;
-            currentCube->ambiant.setX(k%2);
-            currentCube->ambiant.setY(k%4);
-            currentCube->ambiant.setZ(k%6);
 
             // Center the scene with QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2
             cubeTranformation.translate(QVector3D(i*dimArret, 0, j*dimArret) - QVector3D(numCubesPerRow-1, 0, numCubesPerCol-1) * dimArret/2);
