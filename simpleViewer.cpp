@@ -139,7 +139,7 @@ void Viewer::draw()
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
 
-        // Assign a texture to all cubes
+        // Assign textures to all cubes
         m_programRender->setUniformValue(m_texColorLocation, 1);
         m_programRender->setUniformValue(m_texNormalLocation, 2);
 

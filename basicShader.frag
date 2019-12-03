@@ -17,6 +17,7 @@ struct Light
 
 Light spotLight;
 
+uniform vec4 spotLightPosition;
 uniform vec3 spotLightDirection;
 
 uniform sampler2D texColor;
@@ -41,7 +42,6 @@ in vec3 fTangent;
 in vec3 fBinormal;
 in vec3 fNormal;
 in vec3 fPosition;
-in vec3 fLightPosition;
 in vec4 fShadowCoord;
 
 out vec4 fColor;
@@ -49,7 +49,7 @@ out vec4 fColor;
 void
 main()
 {
-    vec4 t = mvMatrix * vec4(fLightPosition,1.0);
+    vec4 t = mvMatrix * spotLightPosition;
 
     spotLight.position = vec3(t/t.w);
     spotLight.direction = normalMatrix * spotLightDirection;
@@ -119,5 +119,5 @@ main()
     float shadowDepth = texture(texShadowMap, coord.xy).r;
     float visible = coord.z > (shadowDepth + bias) ? 0.0 : 1.0;
 
-    fColor = (ambient + vec4(diffuse + specular, 1.0f));
+    fColor = /*visible */ (ambient + vec4(diffuse + specular, 1.0f));
 }
