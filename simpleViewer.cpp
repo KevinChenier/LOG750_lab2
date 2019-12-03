@@ -591,14 +591,13 @@ void Viewer::shadowRender()
     // Bind the shadow shader program.
     m_shadowMapShader->bind();
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
-
-    int numCubes = graph.length();
 
     QMatrix4x4 modelViewMatrix;
     camera()->getModelViewMatrix(modelViewMatrix);
     modelViewMatrix.setToIdentity();
+
+    int numCubes = graph.length();
 
     for (int k=0; k<numCubes; ++k)
     {
@@ -606,7 +605,7 @@ void Viewer::shadowRender()
         QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
 
         // Translate to current cube transformation
-        m_shadowMapShader->setUniformValue(m_mvpMatrixLoc_shadow, m_lightViewProjMatrix*modelViewMatrix);
+        m_shadowMapShader->setUniformValue(m_mvpMatrixLoc_shadow, currentCubeTranformation*m_lightViewProjMatrix*modelViewMatrix);
 
         for (int n=0; n<6; n++)
         {
@@ -614,13 +613,9 @@ void Viewer::shadowRender()
             glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
         }
     }
-
     //Finish drawing and release the framebuffer.
     glFinish();
     m_shadowFBO->release();
-
-    // Uncomment the line below to write a shadow image to the working directory.
-    //m_shadowFBO->toImage().save("shadoMap.png");
 }
 
 void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
