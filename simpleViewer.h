@@ -41,9 +41,7 @@ public:
     Viewer();
     ~Viewer();
 
-    GLfloat getCubeR() const { return cubeR; }
-    GLfloat getCubeG() const { return cubeG; }
-    GLfloat getCubeB() const { return cubeB; }
+    int getCubeTexture() const { return cubeTex; }
 
 public slots:
     void cleanup();
@@ -56,9 +54,7 @@ public slots:
     void rotateAroundZAxisNegative();
     void rotateAroundAxis(QVector3D axis);
 
-    void setCubeR(double r) { cubeR = r; }
-    void setCubeG(double g) { cubeG = g; }
-    void setCubeB(double b) { cubeB = b; }
+    void setTexture(int t) { cubeTex = t; }
 
 protected :
     virtual void draw();
@@ -128,17 +124,18 @@ private:
     int m_cubeSpecular;
     int m_cubeDiffuse;
 
-    int m_cubeColor;
+    //int m_cubeColor;
     int m_newCube;
 
     // Cube textures
-    QOpenGLTexture *m_textureColor;
-    QOpenGLTexture *m_textureNormal;
+    QOpenGLTexture *m_textureColor[6];
+    QOpenGLTexture *m_textureNormal[6];
 
     // Colour of Cube
-    GLfloat cubeR = 0.0f;
-    GLfloat cubeG = 1.0f;
-    GLfloat cubeB = 0.0f;
+    //GLfloat cubeR = 0.0f;
+
+    // Texture of Cube
+    int cubeTex = 0;
 
     GLboolean isNewCube = false;
 

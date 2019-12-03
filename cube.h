@@ -41,11 +41,11 @@ public:
     QVector3D diffuse = QVector3D(0.1f, 0.1f, 0.1f);
     QVector3D specular = QVector3D(0.2f, 0.2f, 0.2f);
 
-    QVector3D color = QVector3D(0.0f, 1.0f, 0.0f);
+    int texture = 0;
     bool isNewCube = false;
 
     // Setters
-    void setColor(QVector3D c) { color = c; }
+    void setTexture(int t) { texture = t; }
     void setIsNewCube(bool b) { isNewCube = b; }
 
 private:

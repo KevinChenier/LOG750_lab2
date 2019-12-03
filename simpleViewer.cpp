@@ -62,14 +62,17 @@ void Viewer::cleanup()
     _meshesGL.clear();
 
     // Delete textures
-    if (m_textureColor!=nullptr) {
-        delete m_textureColor;
-        m_textureColor = nullptr;
+    for(int i = 0; i < 6; i++){
+        if (m_textureColor[i]!=nullptr) {
+            delete m_textureColor[i];
+            m_textureColor[i] = nullptr;
+        }
+        if (m_textureNormal[i] != nullptr) {
+            delete m_textureNormal[i];
+            m_textureNormal[i] = nullptr;
+        }
     }
-    if (m_textureNormal != nullptr) {
-        delete m_textureNormal;
-        m_textureNormal = nullptr;
-    }
+
     doneCurrent();
 }
 
@@ -106,7 +109,6 @@ void Viewer::draw()
         m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
 
-        m_programRender->setUniformValue(m_cubeColor, currentCube->color);
         m_programRender->setUniformValue(m_newCube, currentCube->isNewCube);
 
         // Translate to current cube transformation
@@ -117,9 +119,9 @@ void Viewer::draw()
         m_programRender->setUniformValue(m_texNormalLocation, 1);
 
         glActiveTexture(GL_TEXTURE0);
-        m_textureColor->bind();
+        m_textureColor[currentCube->texture]->bind();
         glActiveTexture(GL_TEXTURE1);
-        m_textureNormal->bind();
+        m_textureNormal[currentCube->texture]->bind();
 
         bool drawSelectedCubeOnClick = k == m_selectedCubeOnClick;
         bool drawSelectedCubeOnHover = k == selectedCubeOnHover;
@@ -182,13 +184,54 @@ void Viewer::init()
     glPointSize(10.0f);
 
     // Load textures
-    m_textureColor = new QOpenGLTexture(QImage("assets/dry_ground.jpg").mirrored());
-    m_textureColor->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    m_textureColor->setMagnificationFilter(QOpenGLTexture::Linear);
+    m_textureColor[0] = new QOpenGLTexture(QImage("assets/dry_ground.jpg").mirrored());
+    m_textureColor[0]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[0]->setMagnificationFilter(QOpenGLTexture::Linear);
 
-    m_textureNormal = new QOpenGLTexture(QImage("assets/dry_ground_normals.jpg").mirrored());
-    m_textureNormal->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    m_textureNormal->setMagnificationFilter(QOpenGLTexture::Linear);
+    m_textureNormal[0] = new QOpenGLTexture(QImage("assets/dry_ground_normals.jpg").mirrored());
+    m_textureNormal[0]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[0]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[1] = new QOpenGLTexture(QImage("assets/granite_floor.jpg").mirrored());
+    m_textureColor[1]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[1]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[1] = new QOpenGLTexture(QImage("assets/granite_floor_normals.jpg").mirrored());
+    m_textureNormal[1]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[1]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[2] = new QOpenGLTexture(QImage("assets/grass2.jpg").mirrored());
+    m_textureColor[2]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[2]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[2] = new QOpenGLTexture(QImage("assets/grass_normals.jpg").mirrored());
+    m_textureNormal[2]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[2]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[3] = new QOpenGLTexture(QImage("assets/limestone_wall.jpg").mirrored());
+    m_textureColor[3]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[3]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[3] = new QOpenGLTexture(QImage("assets/limestone_wall_normals.jpg").mirrored());
+    m_textureNormal[3]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[3]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[4] = new QOpenGLTexture(QImage("assets/wood_floor.jpg").mirrored());
+    m_textureColor[4]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[4]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[4] = new QOpenGLTexture(QImage("assets/wood_floor_normals.jpg").mirrored());
+    m_textureNormal[4]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[4]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[5] = new QOpenGLTexture(QImage("assets/pierre_bouchardee.jpg").mirrored());
+    m_textureColor[5]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[5]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[5] = new QOpenGLTexture(QImage("assets/pierre_bouchardee_normals.jpg").mirrored());
+    m_textureNormal[5]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[5]->setMagnificationFilter(QOpenGLTexture::Linear);
+
 
     // Load the 3D model from the obj file
     loadObjFile("assets/tournevis.obj");
@@ -251,9 +294,6 @@ void Viewer::initRenderShaders()
 
     if ((m_cubeDiffuse = m_programRender->uniformLocation("cubeDiffuse")) < 0)
         qDebug() << "Unable to find shader location for " << "cubeDiffuse";
-
-    if ((m_cubeColor = m_programRender->uniformLocation("cubeColor")) < 0)
-        qDebug() << "Unable to find shader location for " << "cubeColor";
 
     if ((m_newCube = m_programRender->uniformLocation("newCube")) < 0)
         qDebug() << "Unable to find shader location for " << "newCube";
@@ -431,8 +471,7 @@ void Viewer::addCube()
 
     Cube* newCube = new Cube();
 
-    QVector3D color = QVector3D(2.0*getCubeR(), 2.0*getCubeG(), 2.0*getCubeB());
-    newCube->setColor(color);
+    newCube->setTexture(getCubeTexture());
     newCube->setIsNewCube(true);
 
     QMatrix4x4 newCubeTranformation;
