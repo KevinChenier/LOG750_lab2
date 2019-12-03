@@ -76,7 +76,9 @@ DISTFILES += \
     basicShader.frag \
     basicShader.vert \
     constantColor.frag \
-    constantColor.vert
+    constantColor.vert \
+    shadow.frag \
+    shadow.vert
 
 FORMS += QGLViewer/ImageInterface.ui mainwindow.ui
 

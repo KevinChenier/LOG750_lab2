@@ -19,6 +19,21 @@ public:
     const QQueue<QVector2D> getUVs();
     const QVector3D getTangent(int faceID);
 
+    static constexpr float dimArret = 1.0f;
+
+    QVector3D ambient = QVector3D(0.9f, 0.9f, 0.9f);
+    QVector3D diffuse = QVector3D(0.1f, 0.1f, 0.1f);
+    QVector3D specular = QVector3D(0.2f, 0.2f, 0.2f);
+
+    QVector3D color = QVector3D(0.0f, 1.0f, 0.0f);
+    bool isNewCube = false;
+
+    // Setters
+    void setColor(QVector3D c) { color = c; }
+    void setIsNewCube(bool b) { isNewCube = b; }
+
+private:
+
     // all direction
     static constexpr QVector3D frontN = QVector3D(0,0,1);
     static constexpr QVector3D backN = QVector3D(0,0,-1);
@@ -34,21 +49,6 @@ public:
     static constexpr QVector3D leftT = QVector3D(0,0,-1);
     static constexpr QVector3D upperT = QVector3D(0,0,1);
     static constexpr QVector3D bottomT = QVector3D(-1,0,0);
-
-    static constexpr float dimArret = 1.0f;
-
-    QVector3D ambient = QVector3D(0.9f, 0.9f, 0.9f);
-    QVector3D diffuse = QVector3D(0.1f, 0.1f, 0.1f);
-    QVector3D specular = QVector3D(0.2f, 0.2f, 0.2f);
-
-    QVector3D color = QVector3D(0.0f, 1.0f, 0.0f);
-    bool isNewCube = false;
-
-    // Setters
-    void setColor(QVector3D c) { color = c; }
-    void setIsNewCube(bool b) { isNewCube = b; }
-
-private:
 
     QVector3D Normales[24]= {
         frontN, frontN, frontN, frontN,   //front

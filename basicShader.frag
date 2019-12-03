@@ -15,13 +15,13 @@ struct Light
     vec3 specular;
 };
 
-Light light;
+Light spotLight;
 
-uniform vec4 lightPos;
-uniform vec3 lightDirection;
+uniform vec3 spotLightDirection;
 
 uniform sampler2D texColor;
 uniform sampler2D texNormal;
+uniform sampler2D texShadowMap;
 
 uniform bool drawingSelectedCubeOnClick;
 uniform bool drawingSelectedFace;
@@ -41,76 +41,83 @@ in vec3 fTangent;
 in vec3 fBinormal;
 in vec3 fNormal;
 in vec3 fPosition;
+in vec3 fLightPosition;
+in vec4 fShadowCoord;
 
 out vec4 fColor;
 
 void
 main()
 {
-    vec4 t = mvMatrix * lightPos;
+    vec4 t = mvMatrix * vec4(fLightPosition,1.0);
 
-    light.position = vec3(t/t.r);
-    light.direction = normalMatrix * lightDirection;
-    light.cutOff = 0.9978f;
-    light.outerCutOff = 0.2194f;
-    light.constant = 1.0f;
-    light.linear = 0.09;
-    light.quadratic = 0.032;
+    spotLight.position = vec3(t/t.w);
+    spotLight.direction = normalMatrix * spotLightDirection;
+    spotLight.cutOff = 0.9978f;
+    spotLight.outerCutOff = 0.2194f;
+    spotLight.constant = 1.0f;
+    spotLight.linear = 0.09;
+    spotLight.quadratic = 0.032;
 
     if(newCube)
     {
-        light.ambient = cubeColor;
+        spotLight.ambient = cubeColor;
     }
 
     if (drawingSelectedFace)
     {
-        light.ambient = vec3(0.0, 1.0, 0.0);
+        spotLight.ambient = vec3(0.0, 1.0, 0.0);
     }
     else if (drawingSelectedCubeOnClick)
     {
-        light.ambient = vec3(1.0, 0.0, 0.0);
+        spotLight.ambient = vec3(1.0, 0.0, 0.0);
     }
 
     // Add cube own lighting
     if(!drawingSelectedCubeOnClick && !drawingSelectedFace)
-        light.ambient = cubeAmbient;
+        spotLight.ambient = cubeAmbient;
 
-    light.diffuse = cubeDiffuse;
-    light.specular = cubeSpecular;
+    spotLight.diffuse = cubeDiffuse;
+    spotLight.specular = cubeSpecular;
 
-    // Build the matrix to transform from XYZ (normal map) space to TBN (tangent) space
-    // Each vector fills a column of the matrix
+    // Normal mapping
     mat3 tbn = mat3(normalize(fTangent), normalize(fBinormal), normalize(fNormal));
     vec3 normalFromTexture = texture(texNormal, fUV).rgb * 2.0 - vec3(1.0);
-    vec3 norm = normalize(tbn * normalFromTexture);
+    vec3 normalRecalculated = normalize(tbn * normalFromTexture);
 
     // Ambient
-    vec4 ambient = vec4(light.ambient, 1.0) * texture(texColor, fUV);
+    vec4 ambient = vec4(spotLight.ambient, 1.0) * texture(texColor, fUV);
 
     // Diffuse
-    vec3 lightDir = normalize(light.position - fPosition);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff;
+    vec3 lightDirectionOnPixel = normalize(spotLight.position - fPosition);
+    float diff = max(dot(normalRecalculated, lightDirectionOnPixel), 0.0);
+    vec3 diffuse = spotLight.diffuse * diff;
 
     // Specular
     vec3 nviewDirection = normalize(vec3(0.0) - fPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
+    vec3 reflectDir = reflect(-lightDirectionOnPixel, normalRecalculated);
     float spec = pow(max(dot(nviewDirection, reflectDir), 0.0), 32);
-    vec3 specular = light.specular * spec;
+    vec3 specular = spotLight.specular * spec;
 
     // Spotlight (soft edges)
-    float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon = (light.cutOff - light.outerCutOff);
-    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+    float theta = dot(lightDirectionOnPixel, normalize(-spotLight.direction));
+    float epsilon = (spotLight.cutOff - spotLight.outerCutOff);
+    float intensity = clamp((theta - spotLight.outerCutOff) / epsilon, 0.0, 1.0);
     diffuse  *= intensity;
     specular *= intensity;
 
-    // Attenuation
-    float distance = length(light.position - fPosition);
-    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * distance * distance);
+    // Spotlight attenuation
+    float distance = length(spotLight.position - fPosition);
+    float attenuation = 1.0f / (spotLight.constant + spotLight.linear * distance + spotLight.quadratic * distance * distance);
     ambient  *= attenuation;
     diffuse  *= attenuation;
     specular *= attenuation;
 
-    fColor = ambient + vec4(diffuse + specular, 1.0f);
+    // Shadow mapping
+    float bias = 0.005f;
+    vec3 coord = 0.5*(fShadowCoord.xyz / fShadowCoord.w)+0.5;
+    float shadowDepth = texture(texShadowMap, coord.xy).r;
+    float visible = coord.z > (shadowDepth + bias) ? 0.0 : 1.0;
+
+    fColor = (ambient + vec4(diffuse + specular, 1.0f));
 }
