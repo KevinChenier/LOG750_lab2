@@ -34,6 +34,7 @@ uniform vec3 cubeSpecular;
 
 uniform mat4 mvMatrix;
 uniform mat3 normalMatrix;
+uniform mat4 viewMatrix;
 
 uniform vec3 cubeColor;
 uniform bool newCube;
@@ -52,7 +53,7 @@ out vec4 fColor;
 void
 main()
 {
-    vec4 t = mvMatrix * spotLightPosition;
+    vec4 t = viewMatrix * spotLightPosition;
 
     spotLight.position = vec3(t/t.w);
     spotLight.direction = normalMatrix * spotLightDirection;
@@ -111,9 +112,9 @@ main()
 
     // Spotlight attenuation
     float distance = length(spotLight.position - fPosition);
-    float attenuation = 1.0f / (spotLight.constant + spotLight.linear * distance + spotLight.quadratic * distance * distance);
-    ambient  *= attenuation;
-    diffuse  *= attenuation;
+    float attenuation = 1.0f / (spotLight.constant + spotLight.linear * distance + spotLight.quadratic * (distance * distance));
+     ambient *= attenuation;
+    diffuse *= attenuation;
     specular *= attenuation;
 
     // Shadow mapping
