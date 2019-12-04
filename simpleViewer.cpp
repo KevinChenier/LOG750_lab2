@@ -98,6 +98,10 @@ void Viewer::draw()
     // Shadow pass.
     shadowRender();
 
+    // Clear buffers.
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     // Bind our vertex/fragment shaders
     m_programRender->bind();
 
@@ -131,6 +135,7 @@ void Viewer::draw()
         Cube* currentCube = graph[k];
         QMatrix4x4 originalModelViewMatrix(modelViewMatrix);
         QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
+        modelViewMatrix*=currentCubeTranformation;
 
         // Set cube own "lighting" parameters in shader
         m_programRender->setUniformValue(m_cubeAmbient, currentCube->ambient);
@@ -140,7 +145,8 @@ void Viewer::draw()
         m_programRender->setUniformValue(m_newCube, currentCube->isNewCube);
 
         // Translate to current cube transformation
-        m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix*currentCubeTranformation);
+        m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
+        m_programRender->setUniformValue(m_lightMvpMatrixLoc, m_lightViewProjMatrix*modelViewMatrix);
 
         // Assign textures to all cubes
         m_programRender->setUniformValue(m_texColorLocation, 1);
@@ -207,6 +213,7 @@ void Viewer::init()
     glGenVertexArrays(NumVAOs, m_VAOs);
     glGenBuffers(NumBuffers, m_Buffers);
     setSceneRadius(10);
+    //camera()->setZNearCoefficient(0.01);
     camera()->showEntireScene();
 
     initScene();
@@ -248,15 +255,15 @@ void Viewer::initShadowShaders()
     m_shadowMapShader->link();
     m_shadowMapShader->bind();
 
-    m_shadowFBO = new QOpenGLFramebufferObject(ShadowSizeX, ShadowSizeY, QOpenGLFramebufferObject::Depth);
-    m_shadowFBO->bind();
-    m_shadowFBO->release();
-
     if((m_mvpMatrixLoc_shadow = m_shadowMapShader->uniformLocation("mvpMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "mvpMatrix";
 
     if((m_vPositionLoc_shadow = m_shadowMapShader->attributeLocation("vPosition")) < 0)
         qDebug() << "Unable to find shader location for " << "vPosition";
+
+    m_shadowFBO = new QOpenGLFramebufferObject(ShadowSizeX, ShadowSizeY, QOpenGLFramebufferObject::Depth);
+    m_shadowFBO->bind();
+    m_shadowFBO->release();
 }
 
 void Viewer::initRenderShaders()
@@ -581,10 +588,15 @@ void Viewer::shadowRender()
     // Setup the offscreen frame buffer we'll use to store the depth image.
     m_shadowFBO->bind();
 
+    glClearColor(1, 1, 1, 1);
+    // Enable depth test.
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     // Compute the light projection matrix.
     GLfloat lightFOV = 50.f;
     QMatrix4x4 lightProjMatrix;
-    lightProjMatrix.perspective(lightFOV, 1.0f, 0.1f, 10.0f);
+    lightProjMatrix.perspective(lightFOV, ShadowSizeX/ShadowSizeY, 0.01f, 100.0f);
 
     // Compute the light view matrix.
     QVector3D at(0.f,0.f,0.f);
@@ -598,10 +610,7 @@ void Viewer::shadowRender()
     m_shadowMapShader->bind();
 
     glBindVertexArray(m_VAOs[VAO_Cube]);
-
-    QMatrix4x4 modelViewMatrix;
-    camera()->getModelViewMatrix(modelViewMatrix);
-    modelViewMatrix.setToIdentity();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
 
     int numCubes = graph.length();
 
@@ -609,9 +618,12 @@ void Viewer::shadowRender()
     {
         Cube* currentCube = graph[k];
         QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
+        QMatrix4x4 modelViewMatrix;
+        modelViewMatrix.setToIdentity();
+        modelViewMatrix*=currentCubeTranformation;
 
         // Translate to current cube transformation
-        m_shadowMapShader->setUniformValue(m_mvpMatrixLoc_shadow, currentCubeTranformation*m_lightViewProjMatrix*modelViewMatrix);
+        m_shadowMapShader->setUniformValue(m_mvpMatrixLoc_shadow, m_lightViewProjMatrix*modelViewMatrix);
 
         for (int n=0; n<6; n++)
         {

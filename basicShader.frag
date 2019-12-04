@@ -120,5 +120,5 @@ main()
     float shadowDepth = texture(texShadowMap, coord.xy).r;
     float visible = coord.z > (shadowDepth + bias) ? 0.0 : 1.0;
 
-    fColor = /*visible */ (ambient + vec4(diffuse + specular, 1.0f));
+    fColor = visible * (ambient + vec4(diffuse + specular, 1.0f));
 }
