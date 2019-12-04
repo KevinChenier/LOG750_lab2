@@ -114,8 +114,8 @@ private:
 
     animationType currentAnimation = animationType::rotation;
 
-    QVector4D m_spotLightPosition = QVector4D(0.f, 1.f, 0.f, 1.f);
-    QVector3D m_spotLightDirection = QVector3D(0.f, -1.f, 0.f);
+    const QVector4D m_spotLightPosition = QVector4D(0.f, 2.f, 0.f, 1.f);
+    const QVector3D m_spotLightDirection = QVector3D(0.f, -1.f, 0.f);
     QMatrix4x4 m_lightViewProjMatrix;
 
     // Render shaders & locations
@@ -123,7 +123,7 @@ private:
     int m_vPositionLocation, m_vNormalLocation, m_vUVLocation, m_vTangentLocation;
     int m_drawingSelectedCubeOnClick, m_drawingSelectedFace;
     int m_spotLightPositionLocation, m_spotLightDirectionLocation, m_lightMvpMatrixLoc;
-    int m_projMatrixLocation, m_mvMatrixLocation, m_normalMatrixLocation;
+    int m_projMatrixLocation, m_mvMatrixLocation, m_normalMatrixLocation, m_viewMatrixLocation;
     int m_vPositionTool, m_vNormalTool;
     int m_texColorLocation, m_texNormalLocation;
 

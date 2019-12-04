@@ -104,11 +104,14 @@ void Viewer::draw()
     // Get projection and camera transformations
     QMatrix4x4 projectionMatrix;
     QMatrix4x4 modelViewMatrix;
+    QMatrix4x4 viewMatrix;
     camera()->getProjectionMatrix(projectionMatrix);
     camera()->getModelViewMatrix(modelViewMatrix);
+    camera()->getModelViewMatrix(viewMatrix);
 
     m_programRender->setUniformValue(m_projMatrixLocation, projectionMatrix);
     m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
+    m_programRender->setUniformValue(m_viewMatrixLocation, viewMatrix);
     m_programRender->setUniformValue(m_normalMatrixLocation, modelViewMatrix.normalMatrix());
     m_programRender->setUniformValue(m_spotLightPositionLocation, m_spotLightPosition);
     m_programRender->setUniformValue(m_spotLightDirectionLocation, m_spotLightDirection);
@@ -294,6 +297,9 @@ void Viewer::initRenderShaders()
     if ((m_projMatrixLocation = m_programRender->uniformLocation("projMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "projMatrix";
 
+    if ((m_viewMatrixLocation = m_programRender->uniformLocation("viewMatrix")) < 0)
+        qDebug() << "Unable to find shader location for " << "viewMatrix";
+
     if ((m_normalMatrixLocation = m_programRender->uniformLocation("normalMatrix")) < 0)
         qDebug() << "Unable to find shader location for " << "normalMatrix";
 
@@ -391,7 +397,7 @@ void Viewer::initGeometryCube()
 
             while (!cubeVertices.isEmpty()) {
                 QVector3D currentVertice = cubeVertices.dequeue();
-                QVector3D currentNormal = currentCube->getNormal(v%numVerticePerCube);
+                QVector3D currentNormal = currentCube->Normales[v%numVerticePerCube];
                 QVector3D currentTangent = currentCube->getTangent(v%numVerticePerCube);
                 QVector2D currentUVs = cubeUVs.dequeue();
 

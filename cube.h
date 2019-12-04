@@ -30,6 +30,16 @@ public:
 
     // Setters
     void setColor(QVector3D c) { color = c; }
+
+    QVector3D Normales[24]= {
+        frontN, frontN, frontN, frontN,   //front
+        rightN, rightN, rightN, rightN,   //right
+        backN, backN, backN, backN,  //back
+        leftN, leftN, leftN, leftN,  //left
+        upperN, upperN, upperN, upperN,  //upper
+        bottomN, bottomN, bottomN, bottomN, //bottom
+    };
+
     void setIsNewCube(bool b) { isNewCube = b; }
 
 private:
@@ -50,14 +60,7 @@ private:
     static constexpr QVector3D upperT = QVector3D(0,0,1);
     static constexpr QVector3D bottomT = QVector3D(-1,0,0);
 
-    QVector3D Normales[24]= {
-        frontN, frontN, frontN, frontN,   //front
-        rightN, rightN, rightN, rightN,   //right
-        backN, backN, backN, backN,  //back
-        leftN, leftN, leftN, leftN,  //left
-        upperN, upperN, upperN, upperN,  //upper
-        bottomN, bottomN, bottomN, bottomN, //bottom
-    };
+
 
     QVector3D Tangents[24]= {
         frontT, frontT, frontT, frontT,   //front
