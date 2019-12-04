@@ -98,6 +98,7 @@ private:
 
       QVector3D diffuse;
       QVector3D specular;
+      QVector3D anbiant;
       GLfloat specularExponent;
 
       unsigned int numVertices;
@@ -114,7 +115,8 @@ private:
 
     animationType currentAnimation = animationType::rotation;
 
-    const QVector4D m_spotLightPosition = QVector4D(0.f, 2.f, 0.f, 1.f);
+    const QVector4D m_spotLightPosition = QVector4D(0.f, 10.f, 0.f, 1.f);
+    //const QVector4D m_spotLightPosition = QVector4D(0.f, 2.f, 0.f, 1.f);
     const QVector3D m_spotLightDirection = QVector3D(0.f, -1.f, 0.f);
     QMatrix4x4 m_lightViewProjMatrix;
 
@@ -141,8 +143,12 @@ private:
     // Picking
     int m_selectedFace, m_selectedCubeOnClick, selectedCubeOnHover;
 
+
     // Cubes
     int m_cubeAmbient, m_cubeSpecular, m_cubeDiffuse;
+
+    //tool
+    int m_Ns ; bool m_isTool = false;
 
     // New cube color chosen
     int m_cubeColor;

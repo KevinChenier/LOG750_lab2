@@ -13,6 +13,7 @@ using namespace std;
 #include <QVector3D>
 #include <QQueue>
 
+
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 namespace
@@ -120,6 +121,7 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_spotLightPositionLocation, m_spotLightPosition);
     m_programRender->setUniformValue(m_spotLightDirectionLocation, m_spotLightDirection);
     m_programRender->setUniformValue(m_lightMvpMatrixLoc, m_lightViewProjMatrix);
+     m_programRender->setUniformValue(m_isTool, false);
 
     // Bind the shadow depth map to texture unit 0
     glActiveTexture(GL_TEXTURE0);
@@ -138,6 +140,7 @@ void Viewer::draw()
         modelViewMatrix*=currentCubeTranformation;
 
         // Set cube own "lighting" parameters in shader
+
         m_programRender->setUniformValue(m_cubeAmbient, currentCube->ambient);
         m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
@@ -186,10 +189,18 @@ void Viewer::drawMesh()
     camera()->setSceneRadius(100);
 
     m_programRender->setUniformValue(m_mvMatrixLocation, toolTransform);
+    // Assign textures to all cubes
+
 
     for (unsigned int i=0; i<_meshesGL.size(); ++i)
     {
         // Draw the mesh
+        m_programRender->setUniformValue(m_isTool, true);
+        m_programRender->setUniformValue(m_cubeColor, QVector4D(0,0,0,0));
+        m_programRender->setUniformValue(m_Ns, _meshesGL[i].specularExponent);
+        m_programRender->setUniformValue(m_cubeDiffuse, _meshesGL[i].diffuse);
+        m_programRender->setUniformValue(m_cubeSpecular, _meshesGL[i].specular);
+        m_programRender->setUniformValue(m_cubeAmbient, _meshesGL[i].anbiant);
         glBindVertexArray(_meshesGL[i].vao);
         glDrawArrays(GL_TRIANGLES, 0, _meshesGL[i].numVertices);
     }
@@ -327,6 +338,12 @@ void Viewer::initRenderShaders()
 
     if ((m_cubeColor = m_programRender->uniformLocation("cubeColor")) < 0)
         qDebug() << "Unable to find shader location for " << "cubeColor";
+
+    if ((m_Ns = m_programRender->uniformLocation("Ns")) < 0)
+        qDebug() << "Unable to find shader location for " << "Ns";
+
+    if ((m_isTool = m_programRender->uniformLocation("isTool")) < 0)
+        qDebug() << "Unable to find shader location for " << "isTool";
 
     if ((m_newCube = m_programRender->uniformLocation("newCube")) < 0)
         qDebug() << "Unable to find shader location for " << "newCube";
@@ -891,9 +908,11 @@ void Viewer::loadObjFile(const std::string filePath)
         // Set material properties of the mesh
         const float *Kd = materials[meshes[i].materialID].Kd;
         const float *Ks = materials[meshes[i].materialID].Ks;
+        const float *Ka = materials[meshes[i].materialID].Ka;
 
         meshGL.diffuse = QVector3D(Kd[0], Kd[1], Kd[2]);
         meshGL.specular = QVector3D(Ks[0], Ks[1], Ks[2]);
+        meshGL.anbiant = QVector3D(Ka[0], Ka[1], Ka[2]);
         meshGL.specularExponent = materials[meshes[i].materialID].Kn;
 
         // Create its VAO and VBO object

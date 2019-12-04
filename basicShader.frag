@@ -27,16 +27,18 @@ uniform sampler2D texShadowMap;
 uniform bool drawingSelectedCubeOnClick;
 uniform bool drawingSelectedFace;
 
+
 uniform vec3 cubeAmbient;
 uniform vec3 cubeDiffuse;
 uniform vec3 cubeSpecular;
 
 uniform mat4 mvMatrix;
 uniform mat3 normalMatrix;
-uniform mat4 viewMatrix;
 
 uniform vec3 cubeColor;
 uniform bool newCube;
+uniform int Ns;
+uniform bool isTool;
 
 in vec2 fUV;
 in vec3 fTangent;
@@ -50,12 +52,12 @@ out vec4 fColor;
 void
 main()
 {
-    vec4 t = viewMatrix * spotLightPosition;
+    vec4 t = mvMatrix * spotLightPosition;
 
     spotLight.position = vec3(t/t.w);
     spotLight.direction = normalMatrix * spotLightDirection;
-    spotLight.cutOff = 0.99f;
-    spotLight.outerCutOff = 0.22f;
+    spotLight.cutOff = 0.9978f;
+    spotLight.outerCutOff = 0.2194f;
     spotLight.constant = 1.0f;
     spotLight.linear = 0.09;
     spotLight.quadratic = 0.032;
@@ -97,7 +99,7 @@ main()
     // Specular
     vec3 nviewDirection = normalize(vec3(0.0) - fPosition);
     vec3 reflectDir = reflect(-lightDirectionOnPixel, normalRecalculated);
-    float spec = pow(max(dot(nviewDirection, reflectDir), 0.0), 4);
+    float spec = pow(max(dot(nviewDirection, reflectDir), 0.0), 32);
     vec3 specular = spotLight.specular * spec;
 
     // Spotlight (soft edges)
@@ -109,9 +111,9 @@ main()
 
     // Spotlight attenuation
     float distance = length(spotLight.position - fPosition);
-    float attenuation = 1.0f / (spotLight.constant + spotLight.linear * distance + spotLight.quadratic * (distance * distance));
-    ambient *= attenuation;
-    diffuse *= attenuation;
+    float attenuation = 1.0f / (spotLight.constant + spotLight.linear * distance + spotLight.quadratic * distance * distance);
+    ambient  *= attenuation;
+    diffuse  *= attenuation;
     specular *= attenuation;
 
     // Shadow mapping
@@ -119,6 +121,12 @@ main()
     vec3 coord = 0.5*(fShadowCoord.xyz / fShadowCoord.w)+0.5;
     float shadowDepth = texture(texShadowMap, coord.xy).r;
     float visible = coord.z > (shadowDepth + bias) ? 0.0 : 1.0;
+    if (!isTool){
+         fColor = visible * (ambient + vec4(diffuse + specular, 1.0f));
 
-    fColor = visible * (ambient + vec4(diffuse + specular, 1.0f));
-}
+    }else // tool color
+    {
+        fColor = vec4( cubeAmbient + (cubeDiffuse + cubeSpecular * Ns), 1);
+    }
+    }
+
