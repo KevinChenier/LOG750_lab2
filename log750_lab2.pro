@@ -96,3 +96,8 @@ win32 {
     }
   }
 }
+
+unix:!macx: LIBS += -L$$PWD/irrKlang/bin/linux-gcc-64/ -lIrrKlang
+
+INCLUDEPATH += $$PWD/irrKlang/include
+DEPENDPATH += $$PWD/irrKlang/include

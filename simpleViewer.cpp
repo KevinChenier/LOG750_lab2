@@ -12,7 +12,12 @@ using namespace std;
 #include <QVector3D>
 #include <QQueue>
 
+#include <irrKlang.h>
+using namespace irrklang;
+
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
+
+#pragma comment(lib, "irrKlang.lib")
 
 namespace
 {
@@ -72,6 +77,8 @@ void Viewer::cleanup()
             m_textureNormal[i] = nullptr;
         }
     }
+
+    engine->drop();
 
     doneCurrent();
 }
@@ -237,6 +244,9 @@ void Viewer::init()
     loadObjFile("assets/tournevis.obj");
     toolTransform.setToIdentity();
     toolTransform.translate(QVector3D(3,-3,-11));
+
+    // Set up sound engine
+    engine = createIrrKlangDevice();
 }
 
 void Viewer::initRenderShaders()
@@ -484,6 +494,8 @@ void Viewer::addCube()
 
     newCube->addTransformation(currentCubeSelected->getTransformation()*newCubeTranformation);
     graph.append(newCube);
+
+    engine->play2D("appear.wav");
 }
 
 void Viewer::deleteCube()
@@ -499,6 +511,8 @@ void Viewer::deleteCube()
     }
 
     graph.removeOne(currentCube);
+
+    engine->play2D("explosion.wav");
 
 }
 

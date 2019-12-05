@@ -32,6 +32,8 @@
 #include <node.h>
 #include <QOpenGLTexture>
 
+#include <irrKlang.h>
+
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 class Viewer : public QGLViewer, protected QOpenGLFunctions_4_0_Core
@@ -130,6 +132,9 @@ private:
     // Cube textures
     QOpenGLTexture *m_textureColor[6];
     QOpenGLTexture *m_textureNormal[6];
+
+    // Sound engine
+    irrklang::ISoundEngine* engine;
 
     // Colour of Cube
     //GLfloat cubeR = 0.0f;
