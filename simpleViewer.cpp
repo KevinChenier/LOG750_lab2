@@ -593,6 +593,62 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
     update();
 }
 
+void Viewer::shadowRender()
+{
+    // Render the scene from the light's point of view.
+    // Setup the offscreen frame buffer we'll use to store the depth image.
+    m_shadowFBO->bind();
+
+    // Compute the light projection matrix.
+    GLfloat lightFOV = 50.f;
+    QMatrix4x4 lightProjMatrix;
+    lightProjMatrix.perspective(lightFOV, 1.0f, 0.1f, 10.0f);
+
+    // Compute the light view matrix.
+    QVector3D at(0.f,0.f,0.f);
+    QVector3D up(0.f,1.f,0.f);
+    QVector3D lightPos(0.0, 0.0, 0.0);
+    QMatrix4x4 lightViewMatrix;
+    lightViewMatrix.lookAt(lightPos, at, up);
+    m_lightViewProjMatrix = lightProjMatrix * lightViewMatrix;
+
+    // Bind the shadow shader program.
+    m_shadowMapShader->bind();
+
+    glBindVertexArray(m_VAOs[VAO_Cube]);
+
+    QMatrix4x4 modelViewMatrix;
+    camera()->getModelViewMatrix(modelViewMatrix);
+    modelViewMatrix.setToIdentity();
+
+    int numCubes = graph.length();
+
+    for (int k=0; k<numCubes; ++k)
+    {
+        Cube* currentCube = graph[k];
+        QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
+
+        // Translate to current cube transformation
+        m_shadowMapShader->setUniformValue(m_mvpMatrixLoc_shadow, currentCubeTranformation*m_lightViewProjMatrix*modelViewMatrix);
+
+        for (int n=0; n<6; n++)
+        {
+            // Draw the face with the color of selection
+            glDrawRangeElements(GL_TRIANGLES,0,6,(n+1)*6,GL_UNSIGNED_INT,nullptr);
+        }
+    }
+    //Finish drawing and release the framebuffer.
+    glFinish();
+    m_shadowFBO->release();
+}
+/*
+void GLWidget::shadowRender()
+{
+    // Create a viewport that matches the size of the shadow map FBO.
+    glViewport(0, 0, m_shadowFBO->width(), m_shadowFBO->height());
+
+}
+*/
 
 void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
 {
