@@ -94,6 +94,8 @@ private:
     GLuint m_VAOs[NumVAOs];
     GLuint m_Buffers[NumBuffers];
 
+    QMatrix4x4 m_lightViewProjMatrix;
+
     // Render shaders & locations
     QOpenGLShaderProgram *m_programRender;
     int m_vPositionLocation;
