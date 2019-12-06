@@ -114,7 +114,7 @@ private:
 
     animationType currentAnimation = animationType::rotation;
 
-    const QVector4D m_spotLightPosition = QVector4D(0.f, 2.f, 0.f, 1.f);
+    const QVector4D m_spotLightPosition = QVector4D(4.f, 6.f, 10.f, 1.f);
     const QVector3D m_spotLightDirection = QVector3D(0.f, -1.f, 0.f);
     QMatrix4x4 m_lightViewProjMatrix;
 

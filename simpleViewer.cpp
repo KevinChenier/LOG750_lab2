@@ -99,7 +99,7 @@ void Viewer::draw()
     shadowRender();
 
     // Clear buffers.
-    glClearColor(0, 0, 0, 1);
+    glClearColor(0.5, 0.5, 0.5, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Bind our vertex/fragment shaders
@@ -121,9 +121,6 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_spotLightDirectionLocation, m_spotLightDirection);
     m_programRender->setUniformValue(m_lightMvpMatrixLoc, m_lightViewProjMatrix);
 
-    // Bind the shadow depth map to texture unit 0
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_shadowFBO->texture());
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_VAOs[VAO_Cube]);
@@ -146,12 +143,14 @@ void Viewer::draw()
 
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
-        m_programRender->setUniformValue(m_lightMvpMatrixLoc, m_lightViewProjMatrix*modelViewMatrix);
 
         // Assign textures to all cubes
         m_programRender->setUniformValue(m_texColorLocation, 1);
         m_programRender->setUniformValue(m_texNormalLocation, 2);
 
+        // Bind the shadow depth map to texture unit 0
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_shadowFBO->texture());
         glActiveTexture(GL_TEXTURE1);
         m_textureColor->bind();
         glActiveTexture(GL_TEXTURE2);
@@ -540,9 +539,7 @@ void Viewer::deleteCube()
         Cube* parentCube = graph[k];
         parentCube->removeChild(currentCube);
     }
-
     graph.removeOne(currentCube);
-
 }
 
 void Viewer::mousePressEvent(QMouseEvent *e)
@@ -587,6 +584,9 @@ void Viewer::shadowRender()
     // Render the scene from the light's point of view.
     // Setup the offscreen frame buffer we'll use to store the depth image.
     m_shadowFBO->bind();
+    GLint v[4];
+    glGetIntegerv(GL_VIEWPORT, v);
+    glViewport(v[0], v[1], v[2], v[3]);
 
     glClearColor(1, 1, 1, 1);
     // Enable depth test.
@@ -596,7 +596,8 @@ void Viewer::shadowRender()
     // Compute the light projection matrix.
     GLfloat lightFOV = 50.f;
     QMatrix4x4 lightProjMatrix;
-    lightProjMatrix.perspective(lightFOV, ShadowSizeX/ShadowSizeY, 0.01f, 100.0f);
+    float near_plane = 5.0f, far_plane = 20.f;
+    lightProjMatrix.perspective(lightFOV, (float)(v[2] - v[0]) / (v[3] - v[0]), near_plane, far_plane);
 
     // Compute the light view matrix.
     QVector3D at(0.f,0.f,0.f);

@@ -54,8 +54,8 @@ main()
 
     spotLight.position = vec3(t/t.w);
     spotLight.direction = normalMatrix * spotLightDirection;
-    spotLight.cutOff = 0.99f;
-    spotLight.outerCutOff = 0.22f;
+    spotLight.cutOff = 0.52f;
+    spotLight.outerCutOff = 0.5f;
     spotLight.constant = 1.0f;
     spotLight.linear = 0.09;
     spotLight.quadratic = 0.032;
