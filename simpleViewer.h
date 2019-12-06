@@ -31,6 +31,7 @@
 #include <QGLViewer/qglviewer.h>
 #include <node.h>
 #include <QOpenGLTexture>
+#include <QOpenGLFramebufferObject>
 
 #include <irrKlang.h>
 
@@ -115,6 +116,12 @@ private:
     int m_colorLocationPicking;
     int m_projMatrixLocationPicking;
     int m_mvMatrixLocationPicking;
+
+    // Shadow Mapping
+    QOpenGLShaderProgram *m_shadowMapShader;
+    QOpenGLFramebufferObject *m_shadowFBO;
+    int m_mvpMatrixLoc_shadow;
+    int m_vPositionLoc_shadow;
 
     // Picking
     int m_selectedFace;

@@ -22,6 +22,10 @@ using namespace irrklang;
 namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
+
+    const int ShadowSizeX = 2048;
+    const int ShadowSizeY = 2048;
+
     const int numVerticePerCube = 24;
     const int numCubesPerRow = 10;
     const int numCubesPerCol = 10;
@@ -76,6 +80,15 @@ void Viewer::cleanup()
             delete m_textureNormal[i];
             m_textureNormal[i] = nullptr;
         }
+    }
+
+    if (m_shadowMapShader != nullptr) {
+        delete m_shadowMapShader;
+        m_shadowMapShader = nullptr;
+    }
+    if (m_shadowFBO != nullptr) {
+        delete m_shadowFBO;
+        m_shadowFBO = nullptr;
     }
 
     engine->drop();
@@ -178,6 +191,25 @@ void Viewer::init()
     initRenderShaders();
     initPickingShaders();
 
+    // Create shadow map shader
+    m_shadowMapShader = new QOpenGLShaderProgram;
+    if (!m_shadowMapShader->addShaderFromSourceFile(QOpenGLShader::Vertex, "shadow.vert")) {
+        cerr << "Unable to load shader" << endl
+             << "Log file:" << endl;
+        qDebug() << m_shadowMapShader->log();
+    }
+    if (!m_shadowMapShader->addShaderFromSourceFile(QOpenGLShader::Fragment, "shadow.frag")) {
+        cerr << "Unable to load shader" << endl
+             << "Log file:" << endl;
+        qDebug() << m_shadowMapShader->log();
+    }
+    m_shadowMapShader->link();
+    m_shadowMapShader->bind();
+
+    m_mvpMatrixLoc_shadow = m_shadowMapShader->uniformLocation("mvpMatrix");
+    m_vPositionLoc_shadow = m_shadowMapShader->attributeLocation("vPosition");
+
+
     // Create our VertexArrays Objects and VertexBuffer Objects
     glGenVertexArrays(NumVAOs, m_VAOs);
     glGenBuffers(NumBuffers, m_Buffers);
@@ -189,6 +221,10 @@ void Viewer::init()
 
     // Init GL properties
     glPointSize(10.0f);
+
+    m_shadowFBO = new QOpenGLFramebufferObject(ShadowSizeX, ShadowSizeY, QOpenGLFramebufferObject::Depth);
+    m_shadowFBO->bind();
+    m_shadowFBO->release();
 
     // Load textures
     m_textureColor[0] = new QOpenGLTexture(QImage("assets/dry_ground.jpg").mirrored());
@@ -451,6 +487,10 @@ void Viewer::initGeometryCube()
 
     glVertexAttribPointer(GLuint(m_vPositionLocationPicking), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
     glEnableVertexAttribArray(GLuint(m_vPositionLocationPicking));
+
+    m_shadowMapShader->bind();
+    glVertexAttribPointer(m_vPositionLocation, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
+    glEnableVertexAttribArray(GLuint(m_vPositionLoc_shadow));
 
     glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
 }

@@ -12,6 +12,10 @@ out vec3 fPosition;
 out vec2 fUV;
 out vec3 fTangent;
 out vec3 fBinormal;
+
+uniform mat4 mvpLightMatrix;
+out vec4 ShadowCoord;
+
 void
 main()
 {
@@ -23,4 +27,8 @@ main()
     fUV = vUV;
     fTangent.xyz = mat3(mvMatrix)*vTangent;
     fBinormal = mat3(mvMatrix)*cross(vNormal, vTangent);
+
+    ShadowCoord = mvpLightMatrix * vPosition;
+
+    //viewDirection = -vEyeCoord.xyz;
 }
