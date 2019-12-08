@@ -142,12 +142,6 @@ private:
     QOpenGLFramebufferObject *m_shadowFBO;
     int m_vPositionLoc_shadow, m_mvpMatrixLoc_shadow;
 
-    // Shadow Mapping
-    QOpenGLShaderProgram *m_shadowMapShader;
-    QOpenGLFramebufferObject *m_shadowFBO;
-    int m_mvpMatrixLoc_shadow;
-    int m_vPositionLoc_shadow;
-
     // Picking
     int m_selectedFace, m_selectedCubeOnClick, selectedCubeOnHover;
 
@@ -156,9 +150,9 @@ private:
     int m_cubeAmbient, m_cubeSpecular, m_cubeDiffuse;
 
     //tool
-    int m_Ns ; bool m_isTool = false;
+    int m_Ns ; int m_isTool ;
 
-    //int m_cubeColor;
+    int m_cubeColor;
     int m_newCube;
 
     // Cube textures

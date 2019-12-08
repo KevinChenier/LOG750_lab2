@@ -50,7 +50,6 @@ in vec4 fShadowCoord;
 
 out vec4 fColor;
 
-uniform sampler2D texShadowMap;
 in vec3 fLightPosition;
 in vec4 ShadowCoord;
 
@@ -122,7 +121,7 @@ main()
     // Spotlight attenuation
     float distance = length(spotLight.position - fPosition);
     float attenuation = 1.0f / (spotLight.constant + spotLight.linear * distance + spotLight.quadratic * (distance * distance));
-     ambient *= attenuation;
+    ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
 
@@ -131,12 +130,14 @@ main()
     vec3 coord = 0.5*(fShadowCoord.xyz / fShadowCoord.w)+0.5;
     float shadowDepth = texture(texShadowMap, coord.xy).r;
     float visible = coord.z > (shadowDepth + bias) ? 0.0 : 1.0;
-    if (!isTool){
-         fColor = visible * (ambient + vec4(diffuse + specular, 1.0f));
 
-    }else // tool color
-    {
-        fColor = vec4( cubeAmbient + (cubeDiffuse + cubeSpecular * Ns), 1);
+    fColor = visible * (ambient + vec4(diffuse + specular, 1.0f));
+
+
+    if (isTool){
+         fColor = vec4( cubeAmbient + (cubeDiffuse + cubeSpecular * Ns), 1);
     }
+
+
     }
 

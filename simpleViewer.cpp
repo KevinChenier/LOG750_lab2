@@ -41,8 +41,6 @@ namespace
     // rootCube is not the first cube.
     QQueue<Cube*> graph;
 
-    const int ShadowSizeX = 2048;
-    const int ShadowSizeY = 2048;
 }
 
 Viewer::Viewer()
@@ -125,8 +123,9 @@ void Viewer::draw()
     shadowRender();
 
     // Clear buffers.
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+   glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Bind our vertex/fragment shaders
     m_programRender->bind();
@@ -146,7 +145,7 @@ void Viewer::draw()
     m_programRender->setUniformValue(m_spotLightPositionLocation, m_spotLightPosition);
     m_programRender->setUniformValue(m_spotLightDirectionLocation, m_spotLightDirection);
     m_programRender->setUniformValue(m_lightMvpMatrixLoc, m_lightViewProjMatrix);
-     m_programRender->setUniformValue(m_isTool, false);
+
 
     // Bind the shadow depth map to texture unit 0
     glActiveTexture(GL_TEXTURE0);
@@ -166,6 +165,7 @@ void Viewer::draw()
 
         // Set cube own "lighting" parameters in shader
 
+         m_programRender->setUniformValue(m_isTool, false);
         m_programRender->setUniformValue(m_cubeAmbient, currentCube->ambient);
         m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
@@ -592,12 +592,11 @@ void Viewer::initGeometryCube()
     glVertexAttribPointer(GLuint(m_vPositionLocationPicking), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
     glEnableVertexAttribArray(GLuint(m_vPositionLocationPicking));
 
-    m_shadowMapShader->bind();
+    glUseProgram(m_shadowMapShader->programId());
 
     glVertexAttribPointer(m_vPositionLocation, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
     glEnableVertexAttribArray(GLuint(m_vPositionLoc_shadow));
 
-    glClearColor(0.5f, 0.5f, 0.5f, 1.0);// add background
 }
 
 void Viewer::initScene()
@@ -648,6 +647,13 @@ void Viewer::deleteCube()
     if(selectedCubeOnHover < 0) return;
 
     Cube* currentCube = graph[selectedCubeOnHover];
+    Node * firstNodeCurrentCube ;
+    if (!currentCube->getNodes().empty()){
+        firstNodeCurrentCube = currentCube->getChild(0) ;
+        QMatrix4x4 transformation  = firstNodeCurrentCube->getTransformation().inverted()
+                *currentCube->getTransformation();
+        firstNodeCurrentCube->addTransformation(transformation);
+    }
 
     int numCubes = graph.length();
     for(int k = 0; k < numCubes; k++){

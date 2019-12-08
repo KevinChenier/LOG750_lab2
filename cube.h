@@ -24,6 +24,7 @@ public:
     QVector3D ambient = QVector3D(0.9f, 0.9f, 0.9f);
     QVector3D diffuse = QVector3D(0.1f, 0.1f, 0.1f);
     QVector3D specular = QVector3D(0.2f, 0.2f, 0.2f);
+    QVector3D color = QVector3D(0.0, 1.0, 0.0)  ;
 
     int texture = 0;
     bool isNewCube = false;
@@ -32,10 +33,6 @@ public:
 
     void setTexture(int t) { texture = t; }
     void setIsNewCube(bool b) { isNewCube = b; }
-private:
-    void setColor(QVector3D c) { color = c; }
-
-
     QVector3D Normales[24]= {
         frontN, frontN, frontN, frontN,   //front
         rightN, rightN, rightN, rightN,   //right
@@ -44,8 +41,11 @@ private:
         upperN, upperN, upperN, upperN,  //upper
         bottomN, bottomN, bottomN, bottomN, //bottom
     };
+private:
+    void setColor(QVector3D c) { color = c; }
 
-    void setIsNewCube(bool b) { isNewCube = b; }
+
+
 
 private:
 
