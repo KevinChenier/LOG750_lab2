@@ -2,6 +2,8 @@
 uniform mat4 mvMatrix;
 uniform mat4 projMatrix;
 uniform mat3 normalMatrix;
+uniform mat4 mvpLightMatrix;
+
 in vec4 vPosition;
 in vec3 vNormal;
 in vec2 vUV;
@@ -13,22 +15,20 @@ out vec2 fUV;
 out vec3 fTangent;
 out vec3 fBinormal;
 
-uniform mat4 mvpLightMatrix;
-out vec4 ShadowCoord;
+out vec4 fShadowCoord;
+
 
 void
 main()
 {
     vec4 vEyeCoord = mvMatrix * vPosition;
-    gl_Position = projMatrix * vEyeCoord;
 
-    fPosition = vEyeCoord.xyz;
+    gl_Position = projMatrix * vEyeCoord;
+    fPosition = -vEyeCoord.xyz; // add - at fixe conflict
     fNormal = normalMatrix*vNormal;
     fUV = vUV;
     fTangent.xyz = mat3(mvMatrix)*vTangent;
     fBinormal = mat3(mvMatrix)*cross(vNormal, vTangent);
 
-    ShadowCoord = mvpLightMatrix * vPosition;
-
-    //viewDirection = -vEyeCoord.xyz;
+    fShadowCoord = mvpLightMatrix * vPosition;
 }

@@ -15,16 +15,18 @@ struct Light
     vec3 specular;
 };
 
-Light light;
+Light spotLight;
 
-uniform vec4 lightPos;
-uniform vec3 lightDirection;
+uniform vec4 spotLightPosition;
+uniform vec3 spotLightDirection;
 
 uniform sampler2D texColor;
 uniform sampler2D texNormal;
+uniform sampler2D texShadowMap;
 
 uniform bool drawingSelectedCubeOnClick;
 uniform bool drawingSelectedFace;
+
 
 uniform vec3 cubeAmbient;
 uniform vec3 cubeDiffuse;
@@ -32,15 +34,19 @@ uniform vec3 cubeSpecular;
 
 uniform mat4 mvMatrix;
 uniform mat3 normalMatrix;
+uniform mat4 viewMatrix;
 
 uniform vec3 cubeColor;
 uniform bool newCube;
+uniform int Ns;
+uniform bool isTool;
 
 in vec2 fUV;
 in vec3 fTangent;
 in vec3 fBinormal;
 in vec3 fNormal;
 in vec3 fPosition;
+in vec4 fShadowCoord;
 
 out vec4 fColor;
 
@@ -51,61 +57,86 @@ in vec4 ShadowCoord;
 void
 main()
 {
-    /*vec4 t = mvMatrix * lightPos;
+
+    vec4 t = viewMatrix * spotLightPosition;
+
+    spotLight.position = vec3(t/t.w);
+    spotLight.direction = normalMatrix * spotLightDirection;
+    spotLight.cutOff = 0.9978f;
+    spotLight.outerCutOff = 0.2194f;
+    spotLight.constant = 1.0f;
+    spotLight.linear = 0.09;
+    spotLight.quadratic = 0.032;
+
+    if(newCube)
+    {
+        spotLight.ambient = cubeColor;
+    }
+
 
     if (drawingSelectedFace)
     {
-        light.ambient = vec3(0.0, 1.0, 0.0);
+        spotLight.ambient = vec3(0.0, 1.0, 0.0);
     }
     else if (drawingSelectedCubeOnClick)
     {
-        light.ambient = vec3(1.0, 0.0, 0.0);
-    }*/
 
-    // Build the matrix to transform from XYZ (normal map) space to TBN (tangent) space
-    // Each vector fills a column of the matrix
+        spotLight.ambient = vec3(1.0, 0.0, 0.0);
+    }
+
+    // Add cube own lighting
+    if(!drawingSelectedCubeOnClick && !drawingSelectedFace)
+        spotLight.ambient = cubeAmbient;
+
+    spotLight.diffuse = cubeDiffuse;
+    spotLight.specular = cubeSpecular;
+
+
+    // Normal mapping
     mat3 tbn = mat3(normalize(fTangent), normalize(fBinormal), normalize(fNormal));
     vec3 normalFromTexture = texture(texNormal, fUV).rgb * 2.0 - vec3(1.0);
-    vec3 normal = normalize(tbn * normalFromTexture);
+
+    vec3 normalRecalculated = normalize(tbn * normalFromTexture);
+
+    // Ambient
+    vec4 ambient = vec4(spotLight.ambient, 1.0) * texture(texColor, fUV);
 
     // Diffuse
-    vec3 lightDir = normalize(vec3(0.0)-fPosition);
-    vec3 nfNormal = fNormal;
-    float diffuse = max(dot(normal, lightDir), 0.0);
+    vec3 lightDirectionOnPixel = normalize(spotLight.position - fPosition);
+    float diff = max(dot(normalRecalculated, lightDirectionOnPixel), 0.0);
+    vec3 diffuse = spotLight.diffuse * diff;
 
     // Specular
     vec3 nviewDirection = normalize(vec3(0.0) - fPosition);
-    vec3 reflectDir = normalize(-lightDir+2.0*normal*dot(normal,lightDir)); // reflect(-lightDir, fNormal);
-    float specular = pow(max(dot(nviewDirection, reflectDir), 0.0), 32);
+    vec3 reflectDir = reflect(-lightDirectionOnPixel, normalRecalculated);
+    float spec = pow(max(dot(nviewDirection, reflectDir), 0.0), 32);
+    vec3 specular = spotLight.specular * spec;
 
-    vec4 materialColor = texture(texColor, fUV);
-    float visible = 1.0;
+    // Spotlight (soft edges)
+    float theta = dot(lightDirectionOnPixel, normalize(-spotLight.direction));
+    float epsilon = (spotLight.cutOff - spotLight.outerCutOff);
+    float intensity = clamp((theta - spotLight.outerCutOff) / epsilon, 0.0, 1.0);
+    diffuse  *= intensity;
+    specular *= intensity;
+
+    // Spotlight attenuation
+    float distance = length(spotLight.position - fPosition);
+    float attenuation = 1.0f / (spotLight.constant + spotLight.linear * distance + spotLight.quadratic * (distance * distance));
+     ambient *= attenuation;
+    diffuse *= attenuation;
+    specular *= attenuation;
+
+    // Shadow mapping
     float bias = 0.005f;
-
-    // Project the shadow coordinate by dividing by parameter w.
-    // The .xy values are the uv coordinates of the texture, and
-    //  the .z value is the detpth.
-    //
-    // We also need to map uv coordinates to the range [0...1, 0...1]
-    //  and depth values (z) to the range [0...1] by multiplying by 0.5
-    //  and adding 0.5
-    //
-    vec3 coord = 0.5*(ShadowCoord.xyz / ShadowCoord.w)+0.5;
-
-    // Check if the surface is visible.
-    //  If not, reduce the illumination factor.
+    vec3 coord = 0.5*(fShadowCoord.xyz / fShadowCoord.w)+0.5;
     float shadowDepth = texture(texShadowMap, coord.xy).r;
-    if( coord.z > shadowDepth + bias )
+    float visible = coord.z > (shadowDepth + bias) ? 0.0 : 1.0;
+    if (!isTool){
+         fColor = visible * (ambient + vec4(diffuse + specular, 1.0f));
+
+    }else // tool color
     {
-        visible = 0.0;
+        fColor = vec4( cubeAmbient + (cubeDiffuse + cubeSpecular * Ns), 1);
     }
-
-    // Diffuse lighting only.
-    fColor = visible * materialColor * diffuse;
-
-    //fColor = texture(texColor, fUV) * diffuse * 0.8 + vec4(1.0) * specular * 0.2;
-
-    // Cubes werden wie einzelne Cubes und nicht wie gesamte Fläche behandelt ??
-
-}
+    }
 

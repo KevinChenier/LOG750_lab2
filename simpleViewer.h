@@ -31,11 +31,14 @@
 #include <QGLViewer/qglviewer.h>
 #include <node.h>
 #include <QOpenGLTexture>
+
 #include <QOpenGLFramebufferObject>
 
 #include <irrKlang.h>
 
+
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
+QT_FORWARD_DECLARE_CLASS(QOpenGLFramebufferObject)
 
 class Viewer : public QGLViewer, protected QOpenGLFunctions_4_0_Core
 {
@@ -68,24 +71,42 @@ protected :
     virtual void animate();
 
 private:
-    enum animationType { rotation, scaling ,toolRotation};
 
-    animationType currentAnimation = animationType::rotation;
+    void loadObjFile(const std::string filePath);
 
     void initRenderShaders();
     void initPickingShaders();
-    void initDLightingShaders();
+    void initShadowShaders();
     void initGeometryCube();
     void initScene();
     void toolManipulation();
 
     void performSelection(int x, int y, bool selectCubeOnClick);
+    void shadowRender();
 
     void addCube();
     void scaleCube();
     void deleteCube();
 
-    void shadowRender();
+
+    void drawMesh();
+
+    // VAOs and VBOs
+    struct MeshGL
+    {
+      GLuint vao;
+      GLuint vbo;
+
+      QVector3D diffuse;
+      QVector3D specular;
+      QVector3D anbiant;
+      GLfloat specularExponent;
+
+      unsigned int numVertices;
+    };
+
+    enum animationType { rotation, scaling ,toolRotation};
+
 
     // VAOs and VBOs
     enum VAO_IDs { VAO_Cube, NumVAOs };
@@ -94,32 +115,32 @@ private:
     GLuint m_VAOs[NumVAOs];
     GLuint m_Buffers[NumBuffers];
 
+    animationType currentAnimation = animationType::rotation;
+    const QVector4D m_spotLightPosition = QVector4D(0.f, 2.f, 0.f, 1.f);
+
+    const QVector3D m_spotLightDirection = QVector3D(0.f, -1.f, 0.f);
+
     QMatrix4x4 m_lightViewProjMatrix;
 
     // Render shaders & locations
     QOpenGLShaderProgram *m_programRender;
-    int m_vPositionLocation;
-    int m_vNormalLocation;
-    int m_vUVLocation;
-    int m_vTangentLocation;
-    int m_drawingSelectedCubeOnClick;
-    int m_drawingSelectedFace;
-    int m_projMatrixLocation;
-    int m_mvMatrixLocation;
-    int m_normalMatrixLocation;
-    int m_vPositionTool;
-    int m_vNormalTool;
-    int m_lightPositionLocation;
-    int m_lightDirectionLocatiob;
-    int m_texColorLocation;
-    int m_texNormalLocation;
+    int m_vPositionLocation, m_vNormalLocation, m_vUVLocation, m_vTangentLocation;
+    int m_drawingSelectedCubeOnClick, m_drawingSelectedFace;
+    int m_spotLightPositionLocation, m_spotLightDirectionLocation, m_lightMvpMatrixLoc;
+    int m_projMatrixLocation, m_mvMatrixLocation, m_normalMatrixLocation, m_viewMatrixLocation;
+    int m_vPositionTool, m_vNormalTool;
+    int m_texColorLocation, m_texNormalLocation;
 
     // Picking shaders & locations
     QOpenGLShaderProgram *m_programPicking;
     int m_vPositionLocationPicking;
     int m_colorLocationPicking;
-    int m_projMatrixLocationPicking;
-    int m_mvMatrixLocationPicking;
+    int m_projMatrixLocationPicking, m_mvMatrixLocationPicking;
+
+    // Shadow shaders & locations
+    QOpenGLShaderProgram *m_shadowMapShader;
+    QOpenGLFramebufferObject *m_shadowFBO;
+    int m_vPositionLoc_shadow, m_mvpMatrixLoc_shadow;
 
     // Shadow Mapping
     QOpenGLShaderProgram *m_shadowMapShader;
@@ -128,14 +149,14 @@ private:
     int m_vPositionLoc_shadow;
 
     // Picking
-    int m_selectedFace;
-    int m_selectedCubeOnClick;
-    int selectedCubeOnHover;
+    int m_selectedFace, m_selectedCubeOnClick, selectedCubeOnHover;
+
 
     // Cubes
-    int m_cubeAmbient;
-    int m_cubeSpecular;
-    int m_cubeDiffuse;
+    int m_cubeAmbient, m_cubeSpecular, m_cubeDiffuse;
+
+    //tool
+    int m_Ns ; bool m_isTool = false;
 
     //int m_cubeColor;
     int m_newCube;
@@ -147,6 +168,7 @@ private:
     // Sound engine
     irrklang::ISoundEngine* engine;
 
+
     // Colour of Cube
     //GLfloat cubeR = 0.0f;
 
@@ -157,31 +179,14 @@ private:
 
     QVector3D animationAxis;
     float animationCurrentAngle;
-    QMatrix4x4 backToPlanOriginM;
-    QMatrix4x4 backToCubeOriginM;
+    QMatrix4x4 backToPlanOriginM, backToCubeOriginM;
 
     bool meshRotationReachedEnd = false;
 
     static constexpr float animationMaxAngle = 90.f;
     static constexpr float animationIterationAngle = animationMaxAngle/3.f;
 
-    // VAOs and VBOs
-    struct MeshGL
-    {
-      GLuint vao;
-      GLuint vbo;
-
-      QVector3D diffuse;
-      QVector3D specular;
-      GLfloat   specularExponent;
-
-      unsigned int numVertices;
-    };
-
     std::vector<MeshGL> _meshesGL;
-
-    void loadObjFile(const std::string filePath);
-
 };
 
 #endif // SIMPLEVIEWER_H
