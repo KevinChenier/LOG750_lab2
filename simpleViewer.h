@@ -31,7 +31,11 @@
 #include <QGLViewer/qglviewer.h>
 #include <node.h>
 #include <QOpenGLTexture>
-#include <QOpenGLBuffer>
+
+#include <QOpenGLFramebufferObject>
+
+#include <irrKlang.h>
+
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 QT_FORWARD_DECLARE_CLASS(QOpenGLFramebufferObject)
@@ -43,9 +47,7 @@ public:
     Viewer();
     ~Viewer();
 
-    GLfloat getCubeR() const { return cubeR; }
-    GLfloat getCubeG() const { return cubeG; }
-    GLfloat getCubeB() const { return cubeB; }
+    int getCubeTexture() const { return cubeTex; }
 
 public slots:
     void cleanup();
@@ -58,9 +60,7 @@ public slots:
     void rotateAroundZAxisNegative();
     void rotateAroundAxis(QVector3D axis);
 
-    void setCubeR(double r) { cubeR = r; }
-    void setCubeG(double g) { cubeG = g; }
-    void setCubeB(double b) { cubeB = b; }
+    void setTexture(int t) { cubeTex = t; }
 
 protected :
     virtual void draw();
@@ -88,6 +88,7 @@ private:
     void scaleCube();
     void deleteCube();
 
+
     void drawMesh();
 
     // VAOs and VBOs
@@ -106,6 +107,7 @@ private:
 
     enum animationType { rotation, scaling ,toolRotation};
 
+
     // VAOs and VBOs
     enum VAO_IDs { VAO_Cube, NumVAOs };
     enum Buffer_IDs { VBO_Cube, EBO_Cube, NumBuffers };
@@ -117,6 +119,7 @@ private:
     const QVector4D m_spotLightPosition = QVector4D(0.f, 2.f, 0.f, 1.f);
 
     const QVector3D m_spotLightDirection = QVector3D(0.f, -1.f, 0.f);
+
     QMatrix4x4 m_lightViewProjMatrix;
 
     // Render shaders & locations
@@ -139,6 +142,12 @@ private:
     QOpenGLFramebufferObject *m_shadowFBO;
     int m_vPositionLoc_shadow, m_mvpMatrixLoc_shadow;
 
+    // Shadow Mapping
+    QOpenGLShaderProgram *m_shadowMapShader;
+    QOpenGLFramebufferObject *m_shadowFBO;
+    int m_mvpMatrixLoc_shadow;
+    int m_vPositionLoc_shadow;
+
     // Picking
     int m_selectedFace, m_selectedCubeOnClick, selectedCubeOnHover;
 
@@ -149,17 +158,22 @@ private:
     //tool
     int m_Ns ; bool m_isTool = false;
 
-    // New cube color chosen
-    int m_cubeColor;
+    //int m_cubeColor;
     int m_newCube;
 
     // Cube textures
-    QOpenGLTexture *m_textureColor, *m_textureNormal;
+    QOpenGLTexture *m_textureColor[6];
+    QOpenGLTexture *m_textureNormal[6];
+
+    // Sound engine
+    irrklang::ISoundEngine* engine;
+
 
     // Colour of Cube
-    GLfloat cubeR = 0.0f;
-    GLfloat cubeG = 1.0f;
-    GLfloat cubeB = 0.0f;
+    //GLfloat cubeR = 0.0f;
+
+    // Texture of Cube
+    int cubeTex = 0;
 
     GLboolean isNewCube = false;
 

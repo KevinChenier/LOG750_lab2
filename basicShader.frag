@@ -50,9 +50,14 @@ in vec4 fShadowCoord;
 
 out vec4 fColor;
 
+uniform sampler2D texShadowMap;
+in vec3 fLightPosition;
+in vec4 ShadowCoord;
+
 void
 main()
 {
+
     vec4 t = viewMatrix * spotLightPosition;
 
     spotLight.position = vec3(t/t.w);
@@ -68,12 +73,14 @@ main()
         spotLight.ambient = cubeColor;
     }
 
+
     if (drawingSelectedFace)
     {
         spotLight.ambient = vec3(0.0, 1.0, 0.0);
     }
     else if (drawingSelectedCubeOnClick)
     {
+
         spotLight.ambient = vec3(1.0, 0.0, 0.0);
     }
 
@@ -84,9 +91,11 @@ main()
     spotLight.diffuse = cubeDiffuse;
     spotLight.specular = cubeSpecular;
 
+
     // Normal mapping
     mat3 tbn = mat3(normalize(fTangent), normalize(fBinormal), normalize(fNormal));
     vec3 normalFromTexture = texture(texNormal, fUV).rgb * 2.0 - vec3(1.0);
+
     vec3 normalRecalculated = normalize(tbn * normalFromTexture);
 
     // Ambient

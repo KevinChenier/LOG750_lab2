@@ -2,7 +2,8 @@
 in vec4 fPosition;
 out vec4 fColor;
 
-void main(void) 
+void main(void)
+
 {
     vec3 fragCoord = (fPosition.xyz / fPosition.w);
 

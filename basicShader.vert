@@ -14,7 +14,9 @@ out vec3 fPosition;
 out vec2 fUV;
 out vec3 fTangent;
 out vec3 fBinormal;
+
 out vec4 fShadowCoord;
+
 
 void
 main()
@@ -22,10 +24,11 @@ main()
     vec4 vEyeCoord = mvMatrix * vPosition;
 
     gl_Position = projMatrix * vEyeCoord;
-    fPosition = vEyeCoord.xyz;
+    fPosition = -vEyeCoord.xyz; // add - at fixe conflict
     fNormal = normalMatrix*vNormal;
     fUV = vUV;
     fTangent.xyz = mat3(mvMatrix)*vTangent;
     fBinormal = mat3(mvMatrix)*cross(vNormal, vTangent);
+
     fShadowCoord = mvpLightMatrix * vPosition;
 }

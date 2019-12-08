@@ -14,11 +14,21 @@ using namespace std;
 #include <QQueue>
 
 
+#include <irrKlang.h>
+using namespace irrklang;
+
+
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
+
+#pragma comment(lib, "irrKlang.lib")
 
 namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
+
+    const int ShadowSizeX = 2048;
+    const int ShadowSizeY = 2048;
+
     const int numVerticePerCube = 24;
     const int numCubesPerRow = 10;
     const int numCubesPerCol = 10;
@@ -77,20 +87,35 @@ void Viewer::cleanup()
     _meshesGL.clear();
 
     // Delete textures
-    if (m_textureColor!=nullptr) {
-        delete m_textureColor;
-        m_textureColor = nullptr;
+    for(int i = 0; i < 6; i++){
+        if (m_textureColor[i]!=nullptr) {
+            delete m_textureColor[i];
+            m_textureColor[i] = nullptr;
+        }
+        if (m_textureNormal[i] != nullptr) {
+            delete m_textureNormal[i];
+            m_textureNormal[i] = nullptr;
+        }
     }
-    if (m_textureNormal != nullptr) {
-        delete m_textureNormal;
-        m_textureNormal = nullptr;
+
+    if (m_shadowMapShader != nullptr) {
+        delete m_shadowMapShader;
+        m_shadowMapShader = nullptr;
     }
+    if (m_shadowFBO != nullptr) {
+        delete m_shadowFBO;
+        m_shadowFBO = nullptr;
+    }
+
+
+    engine->drop();
 
     // Delete shadow map
     if (m_shadowFBO != nullptr) {
         delete m_shadowFBO;
         m_shadowFBO = nullptr;
     }
+
     doneCurrent();
 }
 
@@ -144,6 +169,7 @@ void Viewer::draw()
         m_programRender->setUniformValue(m_cubeAmbient, currentCube->ambient);
         m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
         m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
+
         m_programRender->setUniformValue(m_cubeColor, currentCube->color);
         m_programRender->setUniformValue(m_newCube, currentCube->isNewCube);
 
@@ -155,10 +181,11 @@ void Viewer::draw()
         m_programRender->setUniformValue(m_texColorLocation, 1);
         m_programRender->setUniformValue(m_texNormalLocation, 2);
 
+        glActiveTexture(GL_TEXTURE0);
+        m_textureColor[currentCube->texture]->bind();
         glActiveTexture(GL_TEXTURE1);
-        m_textureColor->bind();
-        glActiveTexture(GL_TEXTURE2);
-        m_textureNormal->bind();
+        m_textureNormal[currentCube->texture]->bind();
+
 
         bool drawSelectedCubeOnClick = k == m_selectedCubeOnClick;
         bool drawSelectedCubeOnHover = k == selectedCubeOnHover;
@@ -220,6 +247,25 @@ void Viewer::init()
     initPickingShaders();
     initShadowShaders();
 
+    // Create shadow map shader
+    m_shadowMapShader = new QOpenGLShaderProgram;
+    if (!m_shadowMapShader->addShaderFromSourceFile(QOpenGLShader::Vertex, "shadow.vert")) {
+        cerr << "Unable to load shader" << endl
+             << "Log file:" << endl;
+        qDebug() << m_shadowMapShader->log();
+    }
+    if (!m_shadowMapShader->addShaderFromSourceFile(QOpenGLShader::Fragment, "shadow.frag")) {
+        cerr << "Unable to load shader" << endl
+             << "Log file:" << endl;
+        qDebug() << m_shadowMapShader->log();
+    }
+    m_shadowMapShader->link();
+    m_shadowMapShader->bind();
+
+    m_mvpMatrixLoc_shadow = m_shadowMapShader->uniformLocation("mvpMatrix");
+    m_vPositionLoc_shadow = m_shadowMapShader->attributeLocation("vPosition");
+
+
     // Create our VertexArrays Objects and VertexBuffer Objects
     glGenVertexArrays(NumVAOs, m_VAOs);
     glGenBuffers(NumBuffers, m_Buffers);
@@ -233,19 +279,68 @@ void Viewer::init()
     // Init GL properties
     glPointSize(10.0f);
 
-    // Load textures
-    m_textureColor = new QOpenGLTexture(QImage("assets/granite_floor.jpg").mirrored());
-    m_textureColor->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    m_textureColor->setMagnificationFilter(QOpenGLTexture::Linear);
+    m_shadowFBO = new QOpenGLFramebufferObject(ShadowSizeX, ShadowSizeY, QOpenGLFramebufferObject::Depth);
+    m_shadowFBO->bind();
+    m_shadowFBO->release();
 
-    m_textureNormal = new QOpenGLTexture(QImage("assets/granite_floor_normals.jpg").mirrored());
-    m_textureNormal->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    m_textureNormal->setMagnificationFilter(QOpenGLTexture::Linear);
+    // Load textures
+
+    m_textureColor[0] = new QOpenGLTexture(QImage("assets/dry_ground.jpg").mirrored());
+    m_textureColor[0]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[0]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[0] = new QOpenGLTexture(QImage("assets/dry_ground_normals.jpg").mirrored());
+    m_textureNormal[0]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[0]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[1] = new QOpenGLTexture(QImage("assets/granite_floor.jpg").mirrored());
+    m_textureColor[1]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[1]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[1] = new QOpenGLTexture(QImage("assets/granite_floor_normals.jpg").mirrored());
+    m_textureNormal[1]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[1]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[2] = new QOpenGLTexture(QImage("assets/grass2.jpg").mirrored());
+    m_textureColor[2]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[2]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[2] = new QOpenGLTexture(QImage("assets/grass_normals.jpg").mirrored());
+    m_textureNormal[2]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[2]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[3] = new QOpenGLTexture(QImage("assets/limestone_wall.jpg").mirrored());
+    m_textureColor[3]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[3]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[3] = new QOpenGLTexture(QImage("assets/limestone_wall_normals.jpg").mirrored());
+    m_textureNormal[3]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[3]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[4] = new QOpenGLTexture(QImage("assets/wood_floor.jpg").mirrored());
+    m_textureColor[4]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[4]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[4] = new QOpenGLTexture(QImage("assets/wood_floor_normals.jpg").mirrored());
+    m_textureNormal[4]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[4]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureColor[5] = new QOpenGLTexture(QImage("assets/pierre_bouchardee.jpg").mirrored());
+    m_textureColor[5]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureColor[5]->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    m_textureNormal[5] = new QOpenGLTexture(QImage("assets/pierre_bouchardee_normals.jpg").mirrored());
+    m_textureNormal[5]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    m_textureNormal[5]->setMagnificationFilter(QOpenGLTexture::Linear);
+
 
     // Load the 3D model from the obj file
     loadObjFile("assets/tournevis.obj");
     toolTransform.setToIdentity();
     toolTransform.translate(QVector3D(3,-3,-11));
+
+    // Set up sound engine
+    engine = createIrrKlangDevice();
 }
 
 void Viewer::initShadowShaders()
@@ -497,7 +592,8 @@ void Viewer::initGeometryCube()
     glVertexAttribPointer(GLuint(m_vPositionLocationPicking), 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
     glEnableVertexAttribArray(GLuint(m_vPositionLocationPicking));
 
-    glUseProgram(m_shadowMapShader->programId());
+    m_shadowMapShader->bind();
+
     glVertexAttribPointer(m_vPositionLocation, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(offsetVertices));
     glEnableVertexAttribArray(GLuint(m_vPositionLoc_shadow));
 
@@ -530,8 +626,7 @@ void Viewer::addCube()
 
     Cube* newCube = new Cube();
 
-    QVector3D color = QVector3D(2.0*getCubeR(), 2.0*getCubeG(), 2.0*getCubeB());
-    newCube->setColor(color);
+    newCube->setTexture(getCubeTexture());
     newCube->setIsNewCube(true);
 
     QMatrix4x4 newCubeTranformation;
@@ -544,6 +639,8 @@ void Viewer::addCube()
 
     newCube->addTransformation(currentCubeSelected->getTransformation()*newCubeTranformation);
     graph.append(newCube);
+
+    engine->play2D("appear.wav");
 }
 
 void Viewer::deleteCube()
@@ -559,6 +656,8 @@ void Viewer::deleteCube()
     }
 
     graph.removeOne(currentCube);
+
+    engine->play2D("explosion.wav");
 
 }
 
@@ -605,6 +704,7 @@ void Viewer::shadowRender()
     // Setup the offscreen frame buffer we'll use to store the depth image.
     m_shadowFBO->bind();
 
+
     glClearColor(1, 1, 1, 1);
     // Enable depth test.
     glEnable(GL_DEPTH_TEST);
@@ -615,10 +715,13 @@ void Viewer::shadowRender()
     QMatrix4x4 lightProjMatrix;
     lightProjMatrix.perspective(lightFOV, ShadowSizeX/ShadowSizeY, 0.01f, 100.0f);
 
+
     // Compute the light view matrix.
     QVector3D at(0.f,0.f,0.f);
     QVector3D up(0.f,1.f,0.f);
+
     QVector3D lightPos(m_spotLightPosition.x(), m_spotLightPosition.y(), m_spotLightPosition.z());
+
     QMatrix4x4 lightViewMatrix;
     lightViewMatrix.lookAt(lightPos, at, up);
     m_lightViewProjMatrix = lightProjMatrix * lightViewMatrix;
@@ -627,7 +730,14 @@ void Viewer::shadowRender()
     m_shadowMapShader->bind();
 
     glBindVertexArray(m_VAOs[VAO_Cube]);
+// <<<<<<< lioba_lab3
+
+//     QMatrix4x4 modelViewMatrix;
+//     camera()->getModelViewMatrix(modelViewMatrix);
+//     modelViewMatrix.setToIdentity();
+// =======
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[EBO_Cube]);
+//>>>>>>> gerard_lab3
 
     int numCubes = graph.length();
 
@@ -635,12 +745,18 @@ void Viewer::shadowRender()
     {
         Cube* currentCube = graph[k];
         QMatrix4x4 currentCubeTranformation = currentCube->getTransformation();
+// <<<<<<< lioba_lab3
+
+//         // Translate to current cube transformation
+//         m_shadowMapShader->setUniformValue(m_mvpMatrixLoc_shadow, currentCubeTranformation*m_lightViewProjMatrix*modelViewMatrix);
+// =======
         QMatrix4x4 modelViewMatrix;
         modelViewMatrix.setToIdentity();
         modelViewMatrix*=currentCubeTranformation;
 
         // Translate to current cube transformation
         m_shadowMapShader->setUniformValue(m_mvpMatrixLoc_shadow, m_lightViewProjMatrix*modelViewMatrix);
+//>>>>>>> gerard_lab3
 
         for (int n=0; n<6; n++)
         {
@@ -652,6 +768,16 @@ void Viewer::shadowRender()
     glFinish();
     m_shadowFBO->release();
 }
+
+/*
+void GLWidget::shadowRender()
+{
+    // Create a viewport that matches the size of the shadow map FBO.
+    glViewport(0, 0, m_shadowFBO->width(), m_shadowFBO->height());
+
+}
+*/
+
 
 void Viewer::performSelection(int x, int y, bool selectCubeOnClick)
 {
