@@ -30,8 +30,8 @@ namespace
     // rootCube is not the first cube.
     QQueue<Cube*> graph;
 
-    const int ShadowSizeX = 2048;
-    const int ShadowSizeY = 2048;
+    const int ShadowSizeX = 1024;
+    const int ShadowSizeY = 1024;
 }
 
 Viewer::Viewer()
@@ -143,6 +143,7 @@ void Viewer::draw()
 
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
+        //m_programRender->setUniformValue(m_lightMvpMatrixLoc, m_lightViewProjMatrix*modelViewMatrix);
 
         // Assign textures to all cubes
         m_programRender->setUniformValue(m_texColorLocation, 1);
