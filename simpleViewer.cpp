@@ -103,7 +103,8 @@ void Viewer::cleanup()
         m_shadowFBO = nullptr;
     }
 
-    engine->drop();
+    // Works on linux only...
+    // engine->drop();
 
     // Delete shadow map
     if (m_shadowFBO != nullptr) {
@@ -299,6 +300,7 @@ void Viewer::init()
     toolTransform.setToIdentity();
     toolTransform.translate(QVector3D(3,-3,-11));
 
+    // Works on linux only...
     // Set up sound engine
     //engine = createIrrKlangDevice();
 }
@@ -592,6 +594,7 @@ void Viewer::addCube()
     newCube->addTransformation(currentCubeSelected->getTransformation()*newCubeTranformation);
     graph.append(newCube);
 
+    // Works on linux only...
     //engine->play2D("appear.wav");
 }
 
@@ -616,6 +619,7 @@ void Viewer::deleteCube()
 
     graph.removeOne(currentCube);
 
+    // Works on linux only...
     //engine->play2D("explosion.wav");
 }
 
