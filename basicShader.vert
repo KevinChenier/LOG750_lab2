@@ -29,6 +29,5 @@ main()
     fUV = vUV;
     fTangent.xyz = mat3(mvMatrix)*vTangent;
     fBinormal = mat3(mvMatrix)*cross(vNormal, vTangent);
-
     fShadowCoord = mvpLightMatrix * vPosition;
 }

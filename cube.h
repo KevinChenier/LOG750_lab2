@@ -26,13 +26,11 @@ public:
     QVector3D specular = QVector3D(0.2f, 0.2f, 0.2f);
     QVector3D color = QVector3D(0.0, 1.0, 0.0)  ;
 
-    int texture = 0;
-    bool isNewCube = false;
+    int textureID = 0;
 
     // Setters
+    void setTexture(int t) { textureID = t; }
 
-    void setTexture(int t) { texture = t; }
-    void setIsNewCube(bool b) { isNewCube = b; }
     QVector3D Normales[24]= {
         frontN, frontN, frontN, frontN,   //front
         rightN, rightN, rightN, rightN,   //right

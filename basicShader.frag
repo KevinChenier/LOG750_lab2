@@ -27,7 +27,6 @@ uniform sampler2D texShadowMap;
 uniform bool drawingSelectedCubeOnClick;
 uniform bool drawingSelectedFace;
 
-
 uniform vec3 cubeAmbient;
 uniform vec3 cubeDiffuse;
 uniform vec3 cubeSpecular;
@@ -36,8 +35,6 @@ uniform mat4 mvMatrix;
 uniform mat3 normalMatrix;
 uniform mat4 viewMatrix;
 
-uniform vec3 cubeColor;
-uniform bool newCube;
 uniform int Ns;
 uniform bool isTool;
 
@@ -50,51 +47,32 @@ in vec4 fShadowCoord;
 
 out vec4 fColor;
 
-in vec3 fLightPosition;
-in vec4 ShadowCoord;
-
 void
 main()
 {
-
     vec4 t = viewMatrix * spotLightPosition;
 
     spotLight.position = vec3(t/t.w);
     spotLight.direction = normalMatrix * spotLightDirection;
-    spotLight.cutOff = 0.9978f;
-    spotLight.outerCutOff = 0.2194f;
+    spotLight.cutOff = 0.52f;
+    spotLight.outerCutOff = 0.5f;
     spotLight.constant = 1.0f;
     spotLight.linear = 0.09;
     spotLight.quadratic = 0.032;
 
-    if(newCube)
-    {
-        spotLight.ambient = cubeColor;
-    }
-
-
     if (drawingSelectedFace)
-    {
         spotLight.ambient = vec3(0.0, 1.0, 0.0);
-    }
     else if (drawingSelectedCubeOnClick)
-    {
-
         spotLight.ambient = vec3(1.0, 0.0, 0.0);
-    }
-
-    // Add cube own lighting
-    if(!drawingSelectedCubeOnClick && !drawingSelectedFace)
+    else
         spotLight.ambient = cubeAmbient;
 
     spotLight.diffuse = cubeDiffuse;
     spotLight.specular = cubeSpecular;
 
-
     // Normal mapping
     mat3 tbn = mat3(normalize(fTangent), normalize(fBinormal), normalize(fNormal));
     vec3 normalFromTexture = texture(texNormal, fUV).rgb * 2.0 - vec3(1.0);
-
     vec3 normalRecalculated = normalize(tbn * normalFromTexture);
 
     // Ambient
@@ -108,7 +86,7 @@ main()
     // Specular
     vec3 nviewDirection = normalize(vec3(0.0) - fPosition);
     vec3 reflectDir = reflect(-lightDirectionOnPixel, normalRecalculated);
-    float spec = pow(max(dot(nviewDirection, reflectDir), 0.0), 32);
+    float spec = pow(max(dot(nviewDirection, reflectDir), 0.0), 4);
     vec3 specular = spotLight.specular * spec;
 
     // Spotlight (soft edges)
@@ -131,13 +109,5 @@ main()
     float shadowDepth = texture(texShadowMap, coord.xy).r;
     float visible = coord.z > (shadowDepth + bias) ? 0.0 : 1.0;
 
-    fColor = visible * (ambient + vec4(diffuse + specular, 1.0f));
-
-
-    if (isTool){
-         fColor = vec4( cubeAmbient + (cubeDiffuse + cubeSpecular * Ns), 1);
-    }
-
-
-    }
-
+    fColor = isTool ? vec4(cubeAmbient + (cubeDiffuse + cubeSpecular * Ns), 1) :  (ambient + vec4(diffuse + specular, 1.0f));
+}

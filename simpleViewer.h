@@ -99,7 +99,7 @@ private:
 
       QVector3D diffuse;
       QVector3D specular;
-      QVector3D anbiant;
+      QVector3D ambient;
       GLfloat specularExponent;
 
       unsigned int numVertices;
@@ -116,8 +116,7 @@ private:
     GLuint m_Buffers[NumBuffers];
 
     animationType currentAnimation = animationType::rotation;
-    const QVector4D m_spotLightPosition = QVector4D(0.f, 2.f, 0.f, 1.f);
-
+    const QVector4D m_spotLightPosition = QVector4D(0.f, 6.f, 10.f, 1.f);
     const QVector3D m_spotLightDirection = QVector3D(0.f, -1.f, 0.f);
 
     QMatrix4x4 m_lightViewProjMatrix;
@@ -150,10 +149,7 @@ private:
     int m_cubeAmbient, m_cubeSpecular, m_cubeDiffuse;
 
     //tool
-    int m_Ns ; int m_isTool ;
-
-    int m_cubeColor;
-    int m_newCube;
+    int m_Ns ; int m_isTool;
 
     // Cube textures
     QOpenGLTexture *m_textureColor[6];
@@ -161,10 +157,6 @@ private:
 
     // Sound engine
     irrklang::ISoundEngine* engine;
-
-
-    // Colour of Cube
-    //GLfloat cubeR = 0.0f;
 
     // Texture of Cube
     int cubeTex = 0;
