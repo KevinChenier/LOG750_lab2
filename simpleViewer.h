@@ -31,7 +31,6 @@
 #include <QGLViewer/qglviewer.h>
 #include <node.h>
 #include <QOpenGLTexture>
-
 #include <QOpenGLFramebufferObject>
 
 #include <irrKlang.h>
@@ -116,7 +115,7 @@ private:
     GLuint m_Buffers[NumBuffers];
 
     animationType currentAnimation = animationType::rotation;
-    const QVector4D m_spotLightPosition = QVector4D(0.f, 6.f, 10.f, 1.f);
+    const QVector4D m_spotLightPosition = QVector4D(0.f, 5.f, 0.f, 1.f);
     const QVector3D m_spotLightDirection = QVector3D(0.f, -1.f, 0.f);
 
     QMatrix4x4 m_lightViewProjMatrix;
@@ -146,7 +145,7 @@ private:
 
 
     // Cubes
-    int m_cubeAmbient, m_cubeSpecular, m_cubeDiffuse;
+    int m_toolAmbient, m_toolSpecular, m_toolDiffuse;
 
     //tool
     int m_Ns ; int m_isTool;

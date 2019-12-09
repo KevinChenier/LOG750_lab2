@@ -42,11 +42,6 @@ public:
 private:
     void setColor(QVector3D c) { color = c; }
 
-
-
-
-private:
-
     // all direction
     static constexpr QVector3D frontN = QVector3D(0,0,1);
     static constexpr QVector3D backN = QVector3D(0,0,-1);

@@ -24,7 +24,7 @@ main()
     vec4 vEyeCoord = mvMatrix * vPosition;
 
     gl_Position = projMatrix * vEyeCoord;
-    fPosition = -vEyeCoord.xyz; // add - at fixe conflict
+    fPosition = vEyeCoord.xyz;
     fNormal = normalMatrix*vNormal;
     fUV = vUV;
     fTangent.xyz = mat3(mvMatrix)*vTangent;

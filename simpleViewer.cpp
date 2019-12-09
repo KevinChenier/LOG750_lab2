@@ -25,7 +25,6 @@ using namespace irrklang;
 namespace
 {
     // source : https://doc.qt.io/qt-5/qtopengl-cube-example.html
-
     const int ShadowSizeX = 1024;
     const int ShadowSizeY = 1024;
 
@@ -40,7 +39,6 @@ namespace
 
     // rootCube is not the first cube.
     QQueue<Cube*> graph;
-
 }
 
 Viewer::Viewer()
@@ -161,13 +159,12 @@ void Viewer::draw()
 
         // Set cube own "lighting" parameters in shader
         m_programRender->setUniformValue(m_isTool, false);
-        m_programRender->setUniformValue(m_cubeAmbient, currentCube->ambient);
-        m_programRender->setUniformValue(m_cubeDiffuse, currentCube->diffuse);
-        m_programRender->setUniformValue(m_cubeSpecular, currentCube->specular);
+        m_programRender->setUniformValue(m_toolAmbient, currentCube->ambient);
+        m_programRender->setUniformValue(m_toolDiffuse, currentCube->diffuse);
+        m_programRender->setUniformValue(m_toolSpecular, currentCube->specular);
 
         // Translate to current cube transformation
         m_programRender->setUniformValue(m_mvMatrixLocation, modelViewMatrix);
-        m_programRender->setUniformValue(m_lightMvpMatrixLoc, m_lightViewProjMatrix*modelViewMatrix);
 
         // Assign textures to all cubes
         m_programRender->setUniformValue(m_texColorLocation, 1);
@@ -213,9 +210,9 @@ void Viewer::drawMesh()
         // Draw the mesh
         m_programRender->setUniformValue(m_isTool, true);
         m_programRender->setUniformValue(m_Ns, _meshesGL[i].specularExponent);
-        m_programRender->setUniformValue(m_cubeDiffuse, _meshesGL[i].diffuse);
-        m_programRender->setUniformValue(m_cubeSpecular, _meshesGL[i].specular);
-        m_programRender->setUniformValue(m_cubeAmbient, _meshesGL[i].ambient);
+        m_programRender->setUniformValue(m_toolDiffuse, _meshesGL[i].diffuse);
+        m_programRender->setUniformValue(m_toolSpecular, _meshesGL[i].specular);
+        m_programRender->setUniformValue(m_toolAmbient, _meshesGL[i].ambient);
         glBindVertexArray(_meshesGL[i].vao);
         glDrawArrays(GL_TRIANGLES, 0, _meshesGL[i].numVertices);
     }
@@ -385,14 +382,14 @@ void Viewer::initRenderShaders()
     if ((m_drawingSelectedFace = m_programRender->uniformLocation("drawingSelectedFace")) < 0)
         qDebug() << "Unable to find shader location for " << "drawingSelectedFace";
 
-    if ((m_cubeSpecular = m_programRender->uniformLocation("cubeSpecular")) < 0)
-        qDebug() << "Unable to find shader location for " << "cubeSpecular";
+    if ((m_toolSpecular = m_programRender->uniformLocation("toolSpecular")) < 0)
+        qDebug() << "Unable to find shader location for " << "toolSpecular";
 
-    if ((m_cubeAmbient = m_programRender->uniformLocation("cubeAmbient")) < 0)
-        qDebug() << "Unable to find shader location for " << "cubeAmbient";
+    if ((m_toolAmbient = m_programRender->uniformLocation("toolAmbient")) < 0)
+        qDebug() << "Unable to find shader location for " << "toolAmbient";
 
-    if ((m_cubeDiffuse = m_programRender->uniformLocation("cubeDiffuse")) < 0)
-        qDebug() << "Unable to find shader location for " << "cubeDiffuse";
+    if ((m_toolDiffuse = m_programRender->uniformLocation("toolDiffuse")) < 0)
+        qDebug() << "Unable to find shader location for " << "toolDiffuse";
 
     if ((m_Ns = m_programRender->uniformLocation("Ns")) < 0)
         qDebug() << "Unable to find shader location for " << "Ns";
@@ -607,7 +604,7 @@ void Viewer::deleteCube()
 
     if (!currentCube->getNodes().empty()){
         firstNodeCurrentCube = currentCube->getChild(0) ;
-        QMatrix4x4 transformation  = firstNodeCurrentCube->getTransformation().inverted()*currentCube->getTransformation();
+        QMatrix4x4 transformation  = firstNodeCurrentCube->getTransformation().inverted() * currentCube->getTransformation();
         firstNodeCurrentCube->addTransformation(transformation);
     }
 
@@ -701,9 +698,9 @@ void Viewer::shadowRender()
             QMatrix4x4 modelViewMatrix;
             modelViewMatrix.setToIdentity();
             modelViewMatrix*=currentCubeTranformation;
-
             // Translate to current cube transformation
             m_shadowMapShader->setUniformValue(m_mvpMatrixLoc_shadow, m_lightViewProjMatrix*modelViewMatrix);
+
             for (int n=0; n<6; n++)
             {
                 // Draw the face with the color of selection
